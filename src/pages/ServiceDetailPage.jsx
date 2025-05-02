@@ -69,7 +69,7 @@ import { useDirectoryStore } from '../store/directoryStore';
 import { useUserStore } from '../store/userStore';
 import Breadcrumb from '../components/ui/Breadcrumb';
 import { Badge } from "../components/ui/badge";
-import { toast } from "../hooks/use-toast";
+import { toast } from "../hooks/use-toast.jsx";
 
 const ServiceDetailPage = () => {
   const { id } = useParams();

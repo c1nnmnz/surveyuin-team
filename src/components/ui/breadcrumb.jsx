@@ -10,13 +10,14 @@ import { Home, ChevronRight } from 'lucide-react';
  * @param {string} items[].label - Display text for the breadcrumb item
  * @param {React.ReactNode} items[].icon - Optional icon for the breadcrumb item
  * @param {boolean} items[].current - Whether this is the current page (active)
+ * @param {string} className - Additional CSS classes for the breadcrumb
  */
-const Breadcrumb = ({ items = [] }) => {
+const Breadcrumb = ({ items = [], className = '' }) => {
   if (!items || items.length === 0) return null;
 
   return (
-    <nav className="mb-8" aria-label="Breadcrumb">
-      <ol className="flex items-center flex-wrap space-x-2 text-sm">
+    <nav className={`relative z-10 ${className}`} aria-label="Breadcrumb">
+      <ol className="flex items-center flex-wrap space-x-1.5 text-sm">
         {/* Home is always the first item */}
         <li className="flex items-center">
           <Link 
@@ -32,36 +33,48 @@ const Breadcrumb = ({ items = [] }) => {
 
         {/* Map through the rest of the items */}
         {items.map((item, index) => {
+          const isFirst = index === 0;
           const isLast = index === items.length - 1;
           
+          // Determine the appropriate element
+          const content = (
+            <div className="flex items-center">
+              {item.icon && (
+                <span className="flex-shrink-0 mr-1">
+                  {item.icon}
+                </span>
+              )}
+              <span className="truncate max-w-[120px] sm:max-w-[160px] md:max-w-none">
+                {item.label}
+              </span>
+            </div>
+          );
+          
           return (
-            <React.Fragment key={item.label}>
-              {/* Separator between items */}
-              <li className="flex items-center text-secondary-400">
-                <ChevronRight className="w-4 h-4 mx-1" strokeWidth={1.5} />
-              </li>
-              
-              {/* Item */}
+            <React.Fragment key={`breadcrumb-${index}`}>
               <li className="flex items-center">
                 {isLast ? (
-                  // Current/last item (not a link)
-                  <div className="flex items-center px-3 py-1.5 rounded-full bg-primary-50/80 text-primary-900 font-medium shadow-sm backdrop-blur-sm border border-primary-100/50 max-w-[220px]">
-                    {item.icon && <span className="mr-1.5">{item.icon}</span>}
-                    <span className="truncate">{item.label}</span>
-                  </div>
+                  // Current page (not a link)
+                  <span className={`flex items-center py-1 px-2 text-gray-600 font-medium ${isLast ? 'text-primary-700' : 'text-gray-500'}`}>
+                    {content}
+                  </span>
                 ) : (
                   // Link to previous path
                   <Link 
                     to={item.path} 
-                    className="flex items-center text-secondary-500 hover:text-primary-600 transition-colors duration-200 group"
+                    className="flex items-center py-1 px-2 text-gray-500 hover:text-primary-600 transition-colors duration-200"
                   >
-                    <span className="py-1.5 px-3 rounded-full bg-white/80 shadow-sm backdrop-blur-sm border border-gray-100 font-medium group-hover:bg-primary-50/50 group-hover:border-primary-100/50 transition-all duration-200 flex items-center">
-                      {item.icon && <span className="mr-1.5">{item.icon}</span>}
-                      <span>{item.label}</span>
-                    </span>
+                    {content}
                   </Link>
                 )}
               </li>
+              
+              {/* Separator (not for last item) */}
+              {!isLast && (
+                <li className="flex items-center text-gray-400 flex-shrink-0">
+                  <ChevronRight className="h-3 w-3" />
+                </li>
+              )}
             </React.Fragment>
           );
         })}

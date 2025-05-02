@@ -35,23 +35,34 @@ const TestimonialSkeleton = () => (
   </div>
 );
 
-const TestimonialList = () => {
+const TestimonialList = ({ loadMoreRef }) => {
   const { 
     testimonials, 
-    filteredTestimonials, 
     isLoading, 
     pagination, 
-    totalCount, 
     error,
     fetchTestimonials, 
     loadMore
   } = useTestimonialStore();
   
   // Setup intersection observer for infinite loading
-  const [loadMoreRef, inView] = useInView({
+  const [inViewRef, inView] = useInView({
     threshold: 0.5,
     triggerOnce: false
   });
+  
+  // Combine refs
+  const setRefs = React.useCallback(
+    (node) => {
+      // Ref for intersection observer
+      inViewRef(node);
+      // Ref passed from parent
+      if (loadMoreRef) {
+        loadMoreRef(node);
+      }
+    },
+    [inViewRef, loadMoreRef]
+  );
   
   // Load initial data
   useEffect(() => {
@@ -60,17 +71,17 @@ const TestimonialList = () => {
   
   // Handle load more when bottom ref is in view
   useEffect(() => {
-    if (inView && pagination.hasMore && !isLoading) {
+    if (inView && pagination?.hasMore && !isLoading) {
       loadMore();
     }
-  }, [inView, pagination.hasMore, isLoading, loadMore]);
+  }, [inView, pagination, isLoading, loadMore]);
   
   // Find featured testimonial if any
-  const featuredTestimonial = filteredTestimonials.find(t => t.isFeatured);
-  const regularTestimonials = filteredTestimonials.filter(t => !t.isFeatured);
+  const featuredTestimonial = testimonials.find(t => t.isFeatured);
+  const regularTestimonials = testimonials.filter(t => !t.isFeatured);
   
   // Empty state when no testimonials
-  if (filteredTestimonials.length === 0 && !isLoading) {
+  if (testimonials.length === 0 && !isLoading) {
     return (
       <Card className="bg-white dark:bg-gray-950 shadow-sm border border-gray-200 dark:border-gray-800">
         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -129,7 +140,7 @@ const TestimonialList = () => {
     <div className="space-y-6">
       {/* Results count */}
       <div className="text-sm text-gray-500 dark:text-gray-400">
-        Menampilkan {filteredTestimonials.length} dari {totalCount} ulasan
+        Menampilkan {testimonials.length} dari {pagination?.total || 0} ulasan
       </div>
       
       {/* Featured testimonial */}
@@ -172,9 +183,9 @@ const TestimonialList = () => {
       )}
       
       {/* Load more trigger */}
-      {pagination.hasMore && (
+      {pagination?.hasMore && (
         <div 
-          ref={loadMoreRef}
+          ref={setRefs}
           className="flex justify-center mt-8"
         >
           <Button 
@@ -203,7 +214,7 @@ const TestimonialList = () => {
       )}
       
       {/* End of results message */}
-      {!pagination.hasMore && filteredTestimonials.length > 0 && (
+      {!pagination?.hasMore && testimonials.length > 0 && (
         <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
           Anda telah melihat semua ulasan yang tersedia.
         </div>

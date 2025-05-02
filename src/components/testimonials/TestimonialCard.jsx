@@ -39,7 +39,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import useTestimonialStore from '@/store/testimonialStore';
 import { useUserStore } from '@/store/userStore';
-import { getRelativeTime } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
 // Helper function to get avatar fallback based on name
 const getAvatarFallback = (name) => {
@@ -104,6 +104,7 @@ const TestimonialCard = ({ testimonial, featured = false }) => {
       content: replyContent.trim(),
       author: user?.name || 'You',
       isAdmin: isAdmin,
+      gender: user?.gender || 'male',
       timestamp: 'Baru saja',
       date: new Date().toISOString()
     };
@@ -164,7 +165,7 @@ const TestimonialCard = ({ testimonial, featured = false }) => {
   
   // Get relative time
   const relativeTime = testimonial.date
-    ? getRelativeTime(new Date(testimonial.date))
+    ? formatDate(new Date(testimonial.date))
     : testimonial.timestamp;
   
   return (
@@ -333,6 +334,10 @@ const TestimonialCard = ({ testimonial, featured = false }) => {
               {replies.map((reply, index) => (
                 <div key={reply.id || index} className="flex gap-2">
                   <Avatar className="h-6 w-6">
+                    <AvatarImage
+                      src={reply.profileImage || getProfileImagePath(reply.gender || testimonial.gender)}
+                      alt={reply.author}
+                    />
                     <AvatarFallback className={reply.isAdmin 
                       ? "bg-blue-100 text-blue-700" 
                       : "bg-gray-100 text-gray-700"

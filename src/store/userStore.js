@@ -326,7 +326,7 @@ export const useUserStore = create(
       // User state
       user: null,
       isAuthenticated: false,
-      isAdmin: true, // Set to true for development
+      isAdmin: false,
       isLoading: false,
       error: null,
       

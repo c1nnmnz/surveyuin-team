@@ -2,159 +2,206 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge"
 
 /**
- * Merges Tailwind CSS classes with clsx
- * @param  {...any} inputs - Classes to merge
- * @returns {string} - Merged classes
+ * Combine multiple class names with clsx and tailwind-merge
+ * This helps prevent duplicate tailwind classes
  */
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Format a date using options
- * @param {Date|string|number} date - Date to format
- * @param {object} options - Format options
- * @returns {string} - Formatted date
+ * Format a date string into a human-readable format
+ * @param {string|Date} date - Date to format
+ * @param {string} format - Format type ('relative', 'full', 'date', 'time')
  */
-export function formatDate(date, options = {}) {
-  const defaultOptions = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
+export function formatDate(date, format = 'relative') {
+  if (!date) return '';
   
-  const mergedOptions = { ...defaultOptions, ...options };
+  const d = typeof date === 'string' ? new Date(date) : date;
   
-  return new Date(date).toLocaleDateString("id-ID", mergedOptions);
-}
-
-/**
- * Format a date as a relative time from now with simplified periods
- * @param {Date|string|number} date - Date to format
- * @returns {string} - Simplified relative time string
- * 
- * Formats:
- * - Less than 30 seconds: "Baru saja"
- * - Less than 5 minutes: "Beberapa menit yang lalu"
- * - Less than an hour: "Beberapa menit yang lalu" 
- * - Less than a day: "Beberapa jam yang lalu"
- * - Less than a week: "Beberapa hari yang lalu"
- * - Less than a month: "Beberapa minggu yang lalu"
- * - More than a month: "Beberapa bulan yang lalu"
- */
-export function getRelativeTime(date) {
+  // Check for invalid date
+  if (isNaN(d.getTime())) {
+    console.warn('Invalid date provided to formatDate:', date);
+    return '';
+  }
+  
   const now = new Date();
-  const targetDate = new Date(date);
-  const diffInMilliseconds = now - targetDate;
+  const diffInSeconds = Math.floor((now - d) / 1000);
   
-  // Convert to seconds
-  const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
-  
-  // Less than 30 seconds
-  if (diffInSeconds < 30) {
-    return "Baru saja";
+  // For relative time formatting
+  if (format === 'relative') {
+    if (diffInSeconds < 60) {
+      return 'Baru saja';
+    } else if (diffInSeconds < 3600) {
+      return 'Beberapa menit yang lalu';
+    } else if (diffInSeconds < 86400) {
+      return 'Beberapa jam yang lalu';
+    } else if (diffInSeconds < 604800) {
+      return 'Beberapa hari yang lalu';
+    } else if (diffInSeconds < 2592000) {
+      return 'Beberapa minggu yang lalu';
+    } else {
+      // Format as date for older posts
+      return formatDate(d, 'date');
+    }
   }
   
-  // Less than 5 minutes
-  if (diffInSeconds < 300) {
-    return "Beberapa menit yang lalu";
+  // For full date time
+  if (format === 'full') {
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return d.toLocaleDateString('id-ID', options);
   }
   
-  // Less than an hour
-  if (diffInSeconds < 3600) {
-    return "Beberapa menit yang lalu";
+  // For date only
+  if (format === 'date') {
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return d.toLocaleDateString('id-ID', options);
   }
   
-  // Less than a day
-  if (diffInSeconds < 86400) {
-    return "Beberapa jam yang lalu";
+  // For time only
+  if (format === 'time') {
+    const options = { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    };
+    return d.toLocaleTimeString('id-ID', options);
   }
   
-  // Less than a week
-  if (diffInSeconds < 604800) {
-    return "Beberapa hari yang lalu";
-  }
-  
-  // Less than a month (30 days)
-  if (diffInSeconds < 2592000) {
-    return "Beberapa minggu yang lalu";
-  }
-  
-  // Default - more than a month
-  return "Beberapa bulan yang lalu";
+  return '';
 }
 
 /**
- * Generate a consistent color based on a string
- * @param {string} str - Input string
- * @returns {object} - Color object with primary, accent, soft, and veryLight colors
+ * Get avatar fallback text (initials) from a name
+ * @param {string} name - Full name
+ * @returns {string} - Initials (1-2 characters)
  */
-export function generateColorFromString(str) {
-  if (!str) return {
-    primary: '#6366f1',
-    accent: '#4f46e5',
-    soft: '#f0f4ff',
-    veryLight: '#fafbff'
-  };
+export function getAvatarFallback(name) {
+  if (!name) return '';
   
-  // Simple hash function
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  const parts = name.trim().split(' ');
+  
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
   }
   
-  // Get a consistent hue between 0-360
-  const hue = Math.abs(hash % 360);
-  
-  // Generate HSL colors with different saturation/lightness
-  return {
-    primary: `hsl(${hue}, 85%, 60%)`,
-    accent: `hsl(${hue}, 85%, 50%)`,
-    soft: `hsl(${hue}, 85%, 96%)`,
-    veryLight: `hsl(${hue}, 60%, 98%)`
-  };
+  return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
 }
 
 /**
- * Truncate text with ellipsis
+ * Get profile image path based on gender
+ * @param {string} gender - 'male' or 'female'
+ * @returns {string} - Path to the appropriate avatar image
+ */
+export function getProfileImagePath(gender = 'male') {
+  if (gender.toLowerCase() === 'female') {
+    return '/images/avatar-female.png';
+  }
+  return '/images/avatar-male.png';
+}
+
+/**
+ * Sanitize HTML to prevent XSS attacks
+ * @param {string} html - HTML string to sanitize
+ * @returns {string} - Sanitized HTML
+ */
+export function sanitizeHtml(html) {
+  if (!html) return '';
+  
+  // Simple sanitization, replace all tags
+  return html.replace(/<[^>]*>?/gm, '');
+}
+
+/**
+ * Truncate text to a specified length with ellipsis
  * @param {string} text - Text to truncate
- * @param {number} maxLength - Maximum length before truncation
+ * @param {number} length - Maximum length
  * @returns {string} - Truncated text
  */
-export function truncateText(text, maxLength = 100) {
+export function truncateText(text, length = 100) {
   if (!text) return '';
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
+  
+  if (text.length <= length) {
+    return text;
+  }
+  
+  return text.substring(0, length).trim() + '...';
 }
 
 /**
- * Format a number for display
+ * Format a number with thousands separator
  * @param {number} num - Number to format
- * @param {object} options - Format options
  * @returns {string} - Formatted number
  */
-export function formatNumber(num, options = {}) {
-  if (num === null || num === undefined) return '';
+export function formatNumber(num) {
+  if (num === undefined || num === null) return '0';
   
-  const defaultOptions = {
-    compact: false,
-    decimals: 0,
-  };
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+/**
+ * Get a color based on a rating value
+ * @param {number} rating - Rating value (1-5)
+ * @returns {string} - CSS color class
+ */
+export function getRatingColor(rating) {
+  if (!rating) return 'text-gray-400';
   
-  const mergedOptions = { ...defaultOptions, ...options };
+  rating = Number(rating);
   
-  if (mergedOptions.compact) {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    }
+  if (rating >= 4.5) return 'text-green-500';
+  if (rating >= 3.5) return 'text-green-400';
+  if (rating >= 2.5) return 'text-yellow-500';
+  if (rating >= 1.5) return 'text-orange-500';
+  return 'text-red-500';
+}
+
+/**
+ * Generate a random ID
+ * @returns {string} - Random ID
+ */
+export function generateId() {
+  return Math.random().toString(36).substring(2, 15) + 
+         Math.random().toString(36).substring(2, 15);
+}
+
+/**
+ * Get sentiment based on rating
+ * @param {number} rating - Rating value (1-5)
+ * @returns {string} - Sentiment category
+ */
+export function getSentiment(rating) {
+  if (!rating) return 'neutral';
+  
+  rating = Number(rating);
+  
+  if (rating >= 4) return 'positive';
+  if (rating <= 2) return 'negative';
+  return 'neutral';
+}
+
+/**
+ * Get sentiment color based on sentiment value
+ * @param {string} sentiment - Sentiment value ('positive', 'neutral', 'negative')
+ * @returns {string} - CSS color class
+ */
+export function getSentimentColor(sentiment) {
+  switch (sentiment?.toLowerCase()) {
+    case 'positive':
+      return 'text-green-500';
+    case 'negative':
+      return 'text-red-500';
+    case 'neutral':
+    default:
+      return 'text-yellow-500';
   }
-  
-  return num.toLocaleString('id-ID', {
-    minimumFractionDigits: mergedOptions.decimals,
-    maximumFractionDigits: mergedOptions.decimals,
-  });
 }

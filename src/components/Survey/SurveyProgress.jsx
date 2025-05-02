@@ -32,8 +32,8 @@ const SurveyProgress = ({ progressPercentage, answeredCount, totalQuestions, onT
           {/* Progress bar */}
           <div className="w-12 h-2 bg-gray-100/70 rounded-full overflow-hidden">
             <motion.div 
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercentage}%` }}
+              initial={{ width: "0%" }}
+              animate={{ width: `${progressPercentage || 0}%` }}
               className="h-full bg-gradient-to-r from-teal-400 to-blue-500 rounded-full"
               transition={{ 
                 type: "spring",

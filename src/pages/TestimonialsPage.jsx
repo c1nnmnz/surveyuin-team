@@ -5,7 +5,7 @@ import {
   Sparkles, Home, ChevronRight, Clock, Calendar, Share, AlertTriangle, 
   ArrowUp, Heart, Reply, Flag, Bookmark, Send, X, BarChart3, ChevronDown,
   RefreshCw, Download, Sliders, SlidersHorizontal, Check, CircleUser, 
-  BadgeCheck, ArrowUpRight, Plus 
+  BadgeCheck, ArrowUpRight, Plus, MessageSquarePlus
 } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
@@ -52,12 +52,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popove
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Toaster } from '@/components/ui/use-toast.jsx';
 
 // Import custom components
 import TestimonialHeader from '@/components/testimonials/TestimonialHeader';
 import TestimonialStats from '@/components/testimonials/TestimonialStats';
 import TestimonialListFilters from '@/components/testimonials/TestimonialListFilters';
 import TestimonialList from '@/components/testimonials/TestimonialList';
+import TestimonialDialog from '@/components/testimonials/TestimonialDialog';
 
 // Register Chart.js components
 ChartJS.register(
@@ -222,63 +224,100 @@ const TestimonialsPage = () => {
     fetchTrends();
   };
   
+  const title = serviceId ? `Ulasan ${service?.name || 'Layanan'}` : 'Semua Ulasan Layanan UIN Antasari';
+  const subtitle = serviceId 
+    ? service?.description || 'Ulasan dari pengguna sistem UIN Antasari'
+    : 'Lihat apa kata pengguna tentang layanan UIN Antasari Banjarmasin';
+  
     return (
-    <div className="min-h-screen bg-gray-50 pt-16 md:pt-20 pb-20">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Page Header */}
-        <TestimonialHeader 
-          service={service}
-          isAdmin={isAdmin}
-          showAddButton={isAuthenticated}
+    <div className="min-h-screen bg-slate-50 pb-20">
+      {/* Toast notifications */}
+      <Toaster />
+      
+      {/* Main content with proper spacing for fixed header */}
+      <div className="pt-20 sm:pt-24">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* Header with title and breadcrumb */}
+          <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm py-3 -mt-2 mb-6">
+            <TestimonialHeader 
+              title={title}
+              subtitle={subtitle}
+              service={service}
+              isAdmin={isAdmin}
         />
+      </div>
 
-        {/* Main content */}
-        <div className="space-y-6">
-          {/* Statistics */}
-          <TestimonialStats />
-          
-          {/* Filters */}
-          <TestimonialListFilters />
-          
-          {/* Error state */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-              <p className="text-red-600 mb-2">Terjadi kesalahan saat memuat ulasan</p>
-                  <Button 
-                variant="outline" 
-                    size="sm" 
-                onClick={handleRetry}
-                className="text-red-600 border-red-200"
-              >
-                <RefreshCw className="h-4 w-4 mr-1.5" /> Coba Lagi
-                  </Button>
+          {/* Statistics panel - full width on top (Apple style) */}
+          <div className="mb-8">
+            <TestimonialStats />
+      </div>
+
+          {/* Main content */}
+          <div className="grid grid-cols-1 gap-6">
+            {/* Filter and Add button */}
+            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="w-full md:w-auto flex-grow">
+                  <TestimonialListFilters />
+        </div>
+
+                <div className="w-full md:w-auto flex justify-end">
+                  <TestimonialDialog 
+                    triggerClassName="bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/20"
+                  />
                 </div>
+              </div>
+                </div>
+                
+            {/* Testimonial List */}
+                <div>
+              <TestimonialList loadMoreRef={loadMoreRef} />
+              
+              {/* Load more indicator */}
+              {isLoading && (
+                <div className="flex justify-center my-8">
+                  <RefreshCw className="h-6 w-6 text-primary-500 animate-spin" />
+              </div>
               )}
-
-          {/* Testimonial List */}
-          <TestimonialList />
-          
-          {/* Load more trigger */}
-          <div ref={loadMoreRef} className="h-10 flex items-center justify-center">
-            {isLoading && (
-              <div className="animate-spin h-5 w-5 border-2 border-primary-500 border-t-transparent rounded-full"></div>
+              
+              {/* Error display */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-6">
+                  <div className="flex items-start">
+                    <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800">Error Loading Testimonials</h3>
+                      <p className="text-sm text-red-700 mt-1">{error}</p>
+                      <button
+                        onClick={handleRetry}
+                        className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                        Coba Lagi
+                      </button>
+                </div>
+            </div>
+          </div>
             )}
           </div>
               </div>
               </div>
+            </div>
       
       {/* Back to top button */}
-      {showBackToTop && (
-        <div className="fixed bottom-6 right-6 z-50">
-              <Button
-            size="icon"
-            className="h-10 w-10 rounded-full shadow-md bg-white text-gray-700 hover:bg-gray-100"
+            <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
             onClick={scrollToTop}
-              >
+            className="fixed bottom-6 right-6 bg-primary-600 text-white p-3 rounded-full shadow-lg hover:bg-primary-700 transition-colors z-50"
+          >
             <ArrowUp className="h-5 w-5" />
-              </Button>
-        </div>
-      )}
+          </motion.button>
+        )}
+            </AnimatePresence>
     </div>
   );
 };

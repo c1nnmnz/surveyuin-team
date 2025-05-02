@@ -20,6 +20,11 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // Define environment variables directly in the config
+  define: {
+    'import.meta.env.VITE_API_URL': JSON.stringify('http://localhost:3000/api/v1'),
+    'import.meta.env.VITE_USE_MOCK_DATA': JSON.stringify('true'),
+  },
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {

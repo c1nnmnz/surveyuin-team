@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   MessageSquare, 
-  Home, 
-  ChevronLeft, 
-  Download, 
-  PlusCircle, 
+  ChevronLeft,
   Share,
-  FileText
+  FileText,
+  Home
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -30,7 +28,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Tooltip,
@@ -41,9 +38,10 @@ import {
 import Breadcrumb from '@/components/ui/breadcrumb';
 
 const TestimonialHeader = ({ 
+  title = 'Ulasan Pengguna',
+  subtitle = 'Ulasan dari pengguna sistem UIN Antasari',
   service = null, 
-  isAdmin = false,
-  showAddButton = true
+  isAdmin = false
 }) => {
   const navigate = useNavigate();
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -56,7 +54,7 @@ const TestimonialHeader = ({
     if (service?.id) {
       navigate(`/service/${service.id}`);
     } else {
-      navigate('/directory');
+      navigate('/');
     }
   };
   
@@ -89,19 +87,21 @@ const TestimonialHeader = ({
   };
   
   return (
-    <div className="mb-6">
-      {/* Breadcrumb */}
-      <Breadcrumb 
-        items={[
-          { path: '/', label: 'Beranda', icon: <Home className="h-4 w-4" /> },
-          { path: '/directory', label: 'Layanan' },
-          ...(service ? [{ path: `/service/${service.id}`, label: service.name }] : []),
-          { label: 'Ulasan Pengguna', icon: <MessageSquare className="h-4 w-4" />, current: true }
-        ]}
-      />
+    <div className="mb-8">
+      {/* Breadcrumb navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            ...(service ? [{ path: '/directory', label: 'Layanan' }] : []),
+            ...(service ? [{ path: `/service/${service.id}`, label: service.name }] : []),
+            { label: 'Ulasan Pengguna', icon: <MessageSquare className="h-4 w-4" />, current: true }
+          ]}
+          className="text-sm text-gray-500"
+        />
+      </div>
       
       {/* Page title and actions */}
-      <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           {service && (
             <motion.button 
@@ -116,7 +116,7 @@ const TestimonialHeader = ({
           
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              {service ? `Ulasan ${service.name}` : 'Ulasan Pengguna'}
+              {title}
               
               {service && service.verified && (
                 <TooltipProvider>
@@ -135,23 +135,12 @@ const TestimonialHeader = ({
             </h1>
             
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {currentDate} • Ulasan dari pengguna sistem UIN Antasari
+              {subtitle}
             </p>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Share button */}
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleShare}
-            className="h-9"
-          >
-            <Share className="h-4 w-4 mr-1.5" />
-            <span className="hidden sm:inline">Bagikan</span>
-          </Button>
-          
           {/* Admin export button */}
           {isAdmin && (
             <DropdownMenu>
@@ -161,7 +150,7 @@ const TestimonialHeader = ({
                   size="sm"
                   className="h-9"
                 >
-                  <Download className="h-4 w-4 mr-1.5" />
+                  <FileText className="h-4 w-4 mr-1.5" />
                   <span className="hidden sm:inline">Export</span>
                 </Button>
               </DropdownMenuTrigger>
@@ -186,13 +175,16 @@ const TestimonialHeader = ({
             </DropdownMenu>
           )}
           
-          {/* Add testimonial button */}
-          {showAddButton && (
-            <Button size="sm" className="h-9">
-              <PlusCircle className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Beri Ulasan</span>
-            </Button>
-          )}
+          {/* Share button */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleShare}
+            className="h-9"
+          >
+            <Share className="h-4 w-4 mr-1.5" />
+            <span className="hidden sm:inline">Bagikan</span>
+          </Button>
         </div>
       </div>
       
@@ -213,21 +205,14 @@ const TestimonialHeader = ({
               Salin
             </Button>
           </div>
-          <div className="flex justify-center gap-3 mt-4">
-            <Button 
-              variant="outline" 
-              className="flex-1"
-              onClick={() => setShowShareDialog(false)}
-            >
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setShowShareDialog(false)}>
               Batal
             </Button>
-            <Button 
-              className="flex-1"
-              onClick={handleCopyLink}
-            >
+            <Button onClick={handleCopyLink}>
               Bagikan
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
