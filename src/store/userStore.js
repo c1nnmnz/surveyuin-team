@@ -11,7 +11,8 @@ const mockUsers = [
     avatar: null,
     faculty: 'Fakultas Tarbiyah dan Keguruan',
     department: 'Pendidikan Agama Islam',
-    semester: 6
+    semester: 6,
+    gender: 'male'
   },
   {
     id: 'user2',
@@ -21,16 +22,255 @@ const mockUsers = [
     avatar: null,
     faculty: 'Fakultas Tarbiyah dan Keguruan',
     department: 'Pendidikan Agama Islam',
-    position: 'Dosen Tetap'
+    position: 'Dosen Tetap',
+    gender: 'male'
   },
   {
     id: 'user3',
     name: 'Handy Hartono Setiawan',
-    email: 'handyuin-antasari.ac.id',
+    email: 'handy@uin-antasari.ac.id',
     role: 'staff',
     avatar: null,
     department: 'UTIPD',
-    position: 'Admin TI'
+    position: 'Admin TI',
+    gender: 'male'
+  },
+  {
+    id: 'user4',
+    name: 'Fadiyah Nur',
+    email: 'fadiyah@mhs.uin-antasari.ac.id',
+    role: 'student',
+    avatar: null,
+    faculty: 'Fakultas Ekonomi dan Bisnis Islam',
+    department: 'Ekonomi Syariah',
+    semester: 6,
+    gender: 'female'
+  },
+  {
+    id: 'user5',
+    name: 'Nurul Hasanah',
+    email: 'nurul@calon.uin-antasari.ac.id',
+    role: 'prospective',
+    avatar: null,
+    gender: 'female'
+  },
+  {
+    id: 'user6',
+    name: 'Muhammad Rizki',
+    email: 'rizki@mhs.uin-antasari.ac.id',
+    role: 'student',
+    avatar: null,
+    faculty: 'Fakultas Syariah',
+    department: 'Hukum Ekonomi Syariah',
+    semester: 4,
+    gender: 'male'
+  },
+  
+  // New students (Mahasiswa)
+  {
+    id: 'user7',
+    name: 'Ahmad Fauzi',
+    email: 'ahmadfauzi@mhs.uin-antasari.ac.id',
+    role: 'student',
+    avatar: null,
+    faculty: 'Fakultas Tarbiyah dan Keguruan',
+    department: 'Pendidikan Agama Islam',
+    semester: 6,
+    gender: 'male'
+  },
+  {
+    id: 'user8',
+    name: 'Siti Nurhaliza',
+    email: 'sitinurhaliza@mhs.uin-antasari.ac.id',
+    role: 'student',
+    avatar: null,
+    faculty: 'Fakultas Tarbiyah dan Keguruan',
+    department: 'Pendidikan Bahasa Arab',
+    semester: 4,
+    gender: 'female'
+  },
+  {
+    id: 'user9',
+    name: 'Rizky Pratama',
+    email: 'rizkypratama@mhs.uin-antasari.ac.id',
+    role: 'student',
+    avatar: null,
+    faculty: 'Fakultas Ekonomi dan Bisnis Islam',
+    department: 'Perbankan Syariah',
+    semester: 6,
+    gender: 'male'
+  },
+  {
+    id: 'user10',
+    name: 'Indah Lestari',
+    email: 'indahlestari@mhs.uin-antasari.ac.id',
+    role: 'student',
+    avatar: null,
+    faculty: 'Fakultas Dakwah dan Ilmu Komunikasi',
+    department: 'Komunikasi dan Penyiaran Islam',
+    semester: 4,
+    gender: 'female'
+  },
+  {
+    id: 'user11',
+    name: 'Muhammad Arif',
+    email: 'muhammadarif@mhs.uin-antasari.ac.id',
+    role: 'student',
+    avatar: null,
+    faculty: 'Fakultas Syariah',
+    department: 'Hukum Keluarga Islam',
+    semester: 6,
+    gender: 'male'
+  },
+  {
+    id: 'user12',
+    name: 'Fitriani Rahma',
+    email: 'fitrianirahma@mhs.uin-antasari.ac.id',
+    role: 'student',
+    avatar: null,
+    faculty: 'Fakultas Ushuluddin dan Humaniora',
+    department: 'Ilmu Al-Quran dan Tafsir',
+    semester: 4,
+    gender: 'female'
+  },
+  
+  // Lecturers (Dosen)
+  {
+    id: 'user13',
+    name: 'Dr. H. Mahfudz Bahri',
+    email: 'mahfudzbahri@uin-antasari.ac.id',
+    role: 'lecturer',
+    avatar: null,
+    faculty: 'Fakultas Tarbiyah dan Keguruan',
+    department: 'Pendidikan Agama Islam',
+    position: 'Dosen Tetap',
+    gender: 'male'
+  },
+  {
+    id: 'user14',
+    name: 'Dr. Hj. Nurhayati Idris',
+    email: 'nurhayatiidris@uin-antasari.ac.id',
+    role: 'lecturer',
+    avatar: null,
+    faculty: 'Fakultas Syariah',
+    department: 'Hukum Ekonomi Syariah',
+    position: 'Dosen Tetap',
+    gender: 'female'
+  },
+  {
+    id: 'user15',
+    name: 'M. Zainuddin, M.Ag',
+    email: 'zainuddin@uin-antasari.ac.id',
+    role: 'lecturer',
+    avatar: null,
+    faculty: 'Fakultas Ushuluddin dan Humaniora',
+    department: 'Ilmu Al-Quran dan Tafsir',
+    position: 'Dosen Tetap',
+    gender: 'male'
+  },
+  {
+    id: 'user16',
+    name: 'Siti Rahmawati, M.Hum',
+    email: 'sitirahmawati@uin-antasari.ac.id',
+    role: 'lecturer',
+    avatar: null,
+    faculty: 'Fakultas Dakwah dan Ilmu Komunikasi',
+    department: 'Komunikasi dan Penyiaran Islam',
+    position: 'Dosen Tetap',
+    gender: 'female'
+  },
+  
+  // Senior Professors (Guru Besar)
+  {
+    id: 'user17',
+    name: 'Prof. Dr. H. Jalaluddin, M.Ag',
+    email: 'jalaluddin@uin-antasari.ac.id',
+    role: 'lecturer',
+    avatar: null,
+    faculty: 'Fakultas Tarbiyah dan Keguruan',
+    department: 'Pendidikan Agama Islam',
+    position: 'Guru Besar',
+    gender: 'male'
+  },
+  {
+    id: 'user18',
+    name: 'Prof. Dr. Hj. Saodah Nasution, M.Si',
+    email: 'saodahnasution@uin-antasari.ac.id',
+    role: 'lecturer',
+    avatar: null,
+    faculty: 'Fakultas Ekonomi dan Bisnis Islam',
+    department: 'Ekonomi Syariah',
+    position: 'Guru Besar',
+    gender: 'female'
+  },
+  {
+    id: 'user19',
+    name: 'Prof. Dr. Muhammad Thahir, M.Ed',
+    email: 'muhammadthahir@uin-antasari.ac.id',
+    role: 'lecturer',
+    avatar: null,
+    faculty: 'Fakultas Ushuluddin dan Humaniora',
+    department: 'Ilmu Al-Quran dan Tafsir',
+    position: 'Guru Besar',
+    gender: 'male'
+  },
+  
+  // Campus Staff (Staf Kampus)
+  {
+    id: 'user20',
+    name: 'Riko Saputra',
+    email: 'rikosaputra@uin-antasari.ac.id',
+    role: 'staff',
+    avatar: null,
+    department: 'UTIPD',
+    position: 'Staf TI',
+    gender: 'male'
+  },
+  {
+    id: 'user21',
+    name: 'Endah Lestari',
+    email: 'endahlestari@uin-antasari.ac.id',
+    role: 'staff',
+    avatar: null,
+    department: 'Keuangan',
+    position: 'Staf Administrasi',
+    gender: 'female'
+  },
+  {
+    id: 'user22',
+    name: 'Bagas Nurjaman',
+    email: 'bagasnurjaman@uin-antasari.ac.id',
+    role: 'staff',
+    avatar: null,
+    department: 'Perpustakaan',
+    position: 'Pustakawan',
+    gender: 'male'
+  },
+  
+  // Public (Masyarakat Umum)
+  {
+    id: 'user23',
+    name: 'Bambang Santoso',
+    email: 'bambangsantoso@gmail.com',
+    role: 'public',
+    avatar: null,
+    gender: 'male'
+  },
+  {
+    id: 'user24',
+    name: 'Rukiah Anwar',
+    email: 'rukiahanwar@gmail.com',
+    role: 'public',
+    avatar: null,
+    gender: 'female'
+  },
+  {
+    id: 'user25',
+    name: 'H. Mulyadi',
+    email: 'hmulyadi@gmail.com',
+    role: 'public',
+    avatar: null,
+    gender: 'male'
   }
 ];
 
@@ -50,6 +290,14 @@ export const genderOptions = [
   { value: 'female', label: 'Perempuan' },
 ];
 
+export const regionOptions = [
+  { value: 'banjarmasin', label: 'Banjarmasin' },
+  { value: 'martapura', label: 'Martapura' },
+  { value: 'banjarbaru', label: 'Banjarbaru' },
+  { value: 'kapuas', label: 'Kapuas' },
+  { value: 'other', label: 'Lainnya' },
+];
+
 export const originOptions = [
   { value: 'fuh', label: 'Fakultas Ushuluddin dan Humaniora' },
   { value: 'fdik', label: 'Fakultas Dakwah dan Ilmu Komunikasi' },
@@ -66,6 +314,7 @@ export const typeOptions = [
   { value: 'lecturer', label: 'Dosen' },
   { value: 'staff', label: 'Staff' },
   { value: 'student', label: 'Mahasiswa' },
+  { value: 'prospective', label: 'Calon Mahasiswa' },
   { value: 'alumni', label: 'Alumni' },
   { value: 'public', label: 'Masyarakat Umum' },
   { value: 'partner', label: 'Mitra Kerjasama' },
@@ -77,6 +326,7 @@ export const useUserStore = create(
       // User state
       user: null,
       isAuthenticated: false,
+      isAdmin: true, // Set to true for development
       isLoading: false,
       error: null,
       
@@ -88,6 +338,11 @@ export const useUserStore = create(
         respondentOrigin: '',
         respondentType: '',
       },
+      
+      // Form options for components
+      originOptions,
+      typeOptions,
+      regionOptions,
       
       // Survey history
       surveyHistory: [],
@@ -113,6 +368,17 @@ export const useUserStore = create(
           set({ error: error.message, isLoading: false });
           return false;
         }
+      },
+      
+      // Get user info by ID or other criteria
+      getUserByName: (name) => {
+        if (!name) return null;
+        return mockUsers.find(u => u.name.toLowerCase().includes(name.toLowerCase()));
+      },
+      
+      getUsersByFaculty: (faculty) => {
+        if (!faculty) return [];
+        return mockUsers.filter(u => u.faculty && u.faculty.toLowerCase().includes(faculty.toLowerCase()));
       },
       
       register: async (userData) => {
@@ -284,13 +550,7 @@ export const useUserStore = create(
       clearError: () => set({ error: null })
     }),
     {
-      name: 'user-storage',
-      partialize: (state) => ({ 
-        user: state.user, 
-        isAuthenticated: state.isAuthenticated,
-        userData: state.userData,
-        surveyHistory: state.surveyHistory
-      }),
+      name: 'user-store'
     }
   )
 ); 
