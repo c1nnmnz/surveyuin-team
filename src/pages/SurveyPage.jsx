@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -9,15 +9,21 @@ import { surveyQuestions } from '../components/SurveyQuestion';
 
 // Import modular components
 import SurveyHeader from '../components/Survey/SurveyHeader';
-import SurveyProgress from '../components/Survey/SurveyProgress';
 import QuestionNavigator from '../components/Survey/QuestionNavigator';
 import DuplicateWarning from '../components/Survey/DuplicateWarning';
 import SurveySubmitSection from '../components/Survey/SurveySubmitSection';
+import LoadingEffect from '../components/ui/LoadingEffect';
+import Skeleton from '../components/ui/skeleton';
+import { TextSkeleton } from '../components/ui/skeleton';
+import { scrollToQuestion } from '../utils/scrollUtils';
+import { ClipboardCheck, CheckCircle } from 'lucide-react';
 
-// Lazy-load the survey question list component
-const SurveyQuestionList = React.lazy(() => import('../components/SurveyQuestion').then(module => ({
+// Lazy-load the survey question list component - Fixed import of named export
+const SurveyQuestionList = React.lazy(() => 
+  import('../components/SurveyQuestion').then(module => ({
   default: module.SurveyQuestionList
-})));
+  }))
+);
 
 const SurveyPage = () => {
   const { serviceId } = useParams();
@@ -342,11 +348,96 @@ const SurveyPage = () => {
     setShowDuplicateWarning(false);
   };
   
+  // Inline Progress Indicator - always fixed at bottom-left
+  const renderProgressIndicator = () => {
+    const completionPercentage = Math.round(progressPercentage);
+    const isComplete = completionPercentage === 100;
+    return (
+      <motion.div
+        className="fixed bottom-6 left-6 z-[9999]"
+        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        style={{ transformOrigin: 'center', willChange: 'transform, opacity' }}
+      >
+        <motion.button
+          type="button"
+          role="button"
+          aria-label="Toggle question navigator"
+          className={`
+            flex items-center gap-2 rounded-full
+            border shadow-lg backdrop-blur-md
+            transform-gpu
+            ${isComplete
+              ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-emerald-400/20 py-2.5 px-4'
+              : 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-400/20 py-2.5 px-4'
+            }
+          `}
+          whileHover={{
+            scale: 1.03,
+            boxShadow: isComplete
+              ? '0 8px 20px rgba(16, 185, 129, 0.2)'
+              : '0 8px 20px rgba(59, 130, 246, 0.2)'
+          }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setShowQuestionNav(true)}
+        >
+          {/* Left side: Count */}
+          <div className="flex items-center gap-1.5">
+            <div className="w-8 h-8 bg-white/20 flex items-center justify-center rounded-full">
+              {isComplete ? (
+                <CheckCircle className="h-5 w-5 text-white" />
+              ) : (
+                <span className="text-xs font-medium text-white">{answeredCount}</span>
+              )}
+            </div>
+            {!isComplete && <span className="text-xs font-medium text-white/90">/{surveyQuestions.length}</span>}
+          </div>
+          {/* Percentage */}
+          <span className="font-medium text-xs text-white">{completionPercentage}%</span>
+          {/* Progress bar + icon */}
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-12 rounded-full overflow-hidden bg-white/20">
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: `${progressPercentage || 0}%` }}
+                className={`h-full rounded-full ${isComplete ? 'bg-green-300' : 'bg-white'}`}
+                transition={{ type: 'spring', stiffness: 150, damping: 15 }}
+              />
+            </div>
+            <ClipboardCheck className="h-4 w-4 text-white/90" />
+          </div>
+        </motion.button>
+      </motion.div>
+    );
+  };
+  
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-16 h-16 border-4 border-primary border-solid rounded-full border-t-transparent animate-spin"></div>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="max-w-3xl mx-auto pt-8">
+          <TextSkeleton width="200px" height="30px" className="mb-6" />
+          
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
+            <TextSkeleton width="80%" height="24px" className="mb-4" />
+            <TextSkeleton width="90%" height="18px" className="mb-2" />
+            <TextSkeleton width="85%" height="18px" className="mb-6" />
+            
+            <div className="space-y-4 mb-6">
+              <Skeleton variant="rectangular" height="60px" className="rounded-lg" />
+              <Skeleton variant="rectangular" height="60px" className="rounded-lg" />
+              <Skeleton variant="rectangular" height="60px" className="rounded-lg" />
+              <Skeleton variant="rectangular" height="60px" className="rounded-lg" />
+              <Skeleton variant="rectangular" height="60px" className="rounded-lg" />
+            </div>
+            
+            <div className="flex justify-center my-8">
+              <LoadingEffect variant="shimmer" size="lg" text="Menyiapkan survey..." />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -364,31 +455,11 @@ const SurveyPage = () => {
   }
   
   return (
-    <div className="min-h-screen w-full bg-white">
+    <div className="min-h-screen w-full">
       {/* Header */}
       <SurveyHeader 
         serviceData={currentServiceData} 
         onBack={handleBack} 
-      />
-      
-      {/* Progress Bar */}
-      <SurveyProgress 
-        progressPercentage={progressPercentage} 
-        answeredCount={answeredCount} 
-        totalQuestions={surveyQuestions.length} 
-        onToggleQuestionNav={() => setShowQuestionNav(true)} 
-      />
-      
-      {/* Question Navigator */}
-      <QuestionNavigator 
-        showQuestionNav={showQuestionNav} 
-        questionNavRef={questionNavRef}
-        corruptionQuestions={corruptionQuestions}
-        serviceQualityQuestions={serviceQualityQuestions}
-        integrityQuestions={integrityQuestions}
-        formValues={formValues}
-        scrollToQuestion={scrollToQuestion}
-        onClose={() => setShowQuestionNav(false)}
       />
       
       {/* Main Survey Form */}
@@ -443,6 +514,21 @@ const SurveyPage = () => {
           />
         </form>
       </div>
+      
+      {/* Inline Progress Indicator - fixed at bottom-left */}
+      {renderProgressIndicator()}
+      
+      {/* Question Navigator */}
+      <QuestionNavigator 
+        showQuestionNav={showQuestionNav} 
+        questionNavRef={questionNavRef}
+        corruptionQuestions={corruptionQuestions}
+        serviceQualityQuestions={serviceQualityQuestions}
+        integrityQuestions={integrityQuestions}
+        formValues={formValues}
+        scrollToQuestion={scrollToQuestion}
+        onClose={() => setShowQuestionNav(false)}
+      />
     </div>
   );
 };

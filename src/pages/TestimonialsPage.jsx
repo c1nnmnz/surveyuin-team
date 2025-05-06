@@ -33,7 +33,7 @@ import useTestimonialStore from '@/store/testimonialStore';
 // Import UI components
 import Button3D from '../components/Button3D';
 import Breadcrumb from '../components/ui/Breadcrumb';
-import { Skeleton } from '../components/ui/skeleton';
+import Skeleton from '../components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { 
   DropdownMenu,
@@ -216,7 +216,7 @@ const TestimonialsPage = () => {
       }
     }
   }, [inView, isLoading]);
-  
+    
   // Handle retry if error occurs
   const handleRetry = () => {
     fetchTestimonials(true);
@@ -303,7 +303,7 @@ const TestimonialsPage = () => {
               </div>
               </div>
             </div>
-      
+
       {/* Back to top button */}
             <AnimatePresence>
         {showBackToTop && (

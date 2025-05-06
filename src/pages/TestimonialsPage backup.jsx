@@ -32,7 +32,7 @@ import { useUserStore } from '../store/userStore';
 // Import UI components
 import Button3D from '../components/Button3D';
 import Breadcrumb from '../components/ui/Breadcrumb';
-import { Skeleton } from '../components/ui/skeleton';
+import Skeleton from '../components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { 
   DropdownMenu,

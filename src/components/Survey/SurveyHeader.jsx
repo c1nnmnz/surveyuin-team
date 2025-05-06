@@ -4,28 +4,8 @@ import { Link } from 'react-router-dom';
 
 const SurveyHeader = ({ serviceData, onBack }) => {
   return (
-    <div className="bg-white shadow-sm border-b border-gray-200 pt-20">
+    <div className="pt-20">
       <div className="container mx-auto px-4 pt-4">
-        <div className="flex items-center py-2 mb-4">
-          <Link to="/" className="text-gray-500 hover:text-gray-800 transition-colors">
-            <Home className="h-4 w-4" />
-          </Link>
-          <ChevronRight className="mx-2 text-gray-300 h-4 w-4" />
-          <Link to="/directory" className="text-gray-500 hover:text-gray-800 transition-colors text-sm">
-            Direktori
-          </Link>
-          <ChevronRight className="mx-2 text-gray-300 h-4 w-4" />
-          <Link 
-            to={`/service/${serviceData?.id}`} 
-            className="text-gray-500 hover:text-gray-800 transition-colors text-sm"
-          >
-             {serviceData?.name || ''}
-          </Link>
-          <ChevronRight className="mx-2 text-gray-300 h-4 w-4" />
-          <span className="text-gray-800 text-sm font-medium">
-            Survey  {serviceData?.name || ''}
-          </span>
-        </div>
         
         <div className="flex justify-between items-center mb-6">
           <button
@@ -33,8 +13,7 @@ const SurveyHeader = ({ serviceData, onBack }) => {
             className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             aria-label="Back to service details"
           >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Kembali
+
           </button>
         </div>
         
@@ -61,7 +40,7 @@ const SurveyHeader = ({ serviceData, onBack }) => {
           </div>
         </div>
         
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6 max-w-5xl mx-auto">
           <div className="flex">
             <Info className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
             <div className="text-sm text-blue-700">

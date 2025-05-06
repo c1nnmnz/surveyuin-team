@@ -7,9 +7,14 @@ import { useSurveyStore } from '../store/surveyStore';
 import { useUserStore } from '../store/userStore';
 import { useDirectoryStore } from '../store/directoryStore';
 import { surveyQuestions } from '../components/SurveyQuestion';
+import { formatDate } from '@/utils/dateUtils';
+import { getScoreColorClass, getScoreInterpretation } from '@/utils/scoreUtils';
+import Breadcrumb from '../components/ui/breadcrumb';
+import LoadingEffect from '../components/ui/LoadingEffect';
+import { FileText, ClipboardCheck } from 'lucide-react';
 
 const SurveyDetailPage = () => {
-  const { responseId: serviceId } = useParams(); // We're using the route param as serviceId
+  const { responseId } = useParams(); // We're using the route param as responseId
   const navigate = useNavigate();
   const { allResponses, getResponsesForService, isServiceCompleted } = useSurveyStore();
   const { user } = useUserStore();
@@ -35,11 +40,11 @@ const SurveyDetailPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        console.log("Fetching survey detail for serviceId:", serviceId);
+        console.log("Fetching survey detail for responseId:", responseId);
         console.log("All responses available:", allResponses);
         
         // Get service data from directory
-        const serviceData = getServiceById(serviceId);
+        const serviceData = getServiceById(responseId);
         console.log("Service data from directory:", serviceData);
         
         // Get all responses for this service
@@ -47,13 +52,13 @@ const SurveyDetailPage = () => {
         
         // First try using the getResponsesForService function
         if (typeof getResponsesForService === 'function') {
-          serviceResponses = getResponsesForService(serviceId);
+          serviceResponses = getResponsesForService(responseId);
           console.log("Responses from getResponsesForService:", serviceResponses);
         }
         
         // Fallback to filtering allResponses manually if needed
         if (!serviceResponses || serviceResponses.length === 0) {
-          serviceResponses = allResponses.filter(r => r.serviceId === serviceId);
+          serviceResponses = allResponses.filter(r => r.serviceId === responseId);
           console.log("Responses from manual filtering:", serviceResponses);
         }
         
@@ -72,7 +77,7 @@ const SurveyDetailPage = () => {
         ];
         
         // Get service name regardless of response existence
-        const serviceName = serviceData ? serviceData.name : `Survei Layanan ${serviceId}`;
+        const serviceName = serviceData ? serviceData.name : `Survei Layanan ${responseId}`;
         
         if (serviceResponses.length > 0) {
           // Use the most recent response
@@ -88,7 +93,7 @@ const SurveyDetailPage = () => {
           setSurveyResponse(latestResponse);
           
           setSurveyDetails({
-            id: serviceId,
+            id: responseId,
             title: serviceName, 
             description: serviceData?.description || 'Detail survei yang telah Anda isi untuk layanan ini.',
             questions: allQuestions,
@@ -99,12 +104,12 @@ const SurveyDetailPage = () => {
           calculateDetailedScores(latestResponse, questionsByCategory);
         } else {
           // If response not found, check if user completed this service
-          const isCompleted = isServiceCompleted(serviceId);
-          console.log("Service completion status:", { isCompleted, serviceId });
+          const isCompleted = isServiceCompleted(responseId);
+          console.log("Service completion status:", { isCompleted, responseId });
           
           // Create skeleton data for display even if no response found
           setSurveyDetails({
-            id: serviceId,
+            id: responseId,
             title: serviceName, 
             description: isCompleted 
               ? 'Detail respons survei tidak tersedia tetapi layanan telah diselesaikan.' 
@@ -123,7 +128,7 @@ const SurveyDetailPage = () => {
         console.error("Error fetching survey details:", error);
         // Set minimal survey details even on error
         setSurveyDetails({
-          id: serviceId,
+          id: responseId,
           title: 'Survei Layanan', 
           description: 'Terjadi kesalahan saat memuat detail survei.',
           questions: []
@@ -134,7 +139,7 @@ const SurveyDetailPage = () => {
     };
     
     fetchData();
-  }, [serviceId, allResponses, navigate, isServiceCompleted, getResponsesForService, getServiceById]);
+  }, [responseId, allResponses, navigate, isServiceCompleted, getResponsesForService, getServiceById]);
 
   // Calculate detailed scores for all categories and dimensions
   const calculateDetailedScores = (response, questionsByCategory) => {
@@ -352,104 +357,31 @@ const SurveyDetailPage = () => {
     return option ? option.label : value;
   };
 
-  // Format date in Indonesian locale
-  const formatDate = (date) => {
-    if (!date) return '-';
-    try {
-      const dateObj = typeof date === 'string' ? parseISO(date) : date;
-      return format(dateObj, 'dd MMMM yyyy', { locale: id });
-    } catch (error) {
-      console.error("Date formatting error:", error);
-      return String(date);
-    }
-  };
-
-  // Get color class based on score
-  const getScoreColorClass = (score) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-blue-600';
-    if (score >= 40) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
   // Get interpretation text based on score
-  const getScoreInterpretation = (score, category = 'overall') => {
-    const interpretations = {
-      overall: {
-        excellent: 'Sangat baik! Anda memberikan penilaian sangat positif pada layanan ini.',
-        good: 'Baik. Anda memberikan penilaian cukup positif pada layanan ini.',
-        average: 'Cukup. Anda memberikan penilaian netral pada layanan ini.',
-        poor: 'Kurang baik. Anda memberikan penilaian cenderung negatif pada layanan ini.'
-      },
-      corruptionPerception: {
-        excellent: 'Sangat baik! Layanan ini memiliki tingkat persepsi korupsi yang sangat rendah.',
-        good: 'Baik. Layanan ini memiliki tingkat persepsi korupsi yang rendah.',
-        average: 'Cukup. Layanan ini memiliki tingkat persepsi korupsi yang moderat.',
-        poor: 'Perhatian! Layanan ini memiliki tingkat persepsi korupsi yang tinggi.'
-      },
-      serviceQuality: {
-        excellent: 'Sangat memuaskan! Kualitas layanan ini sangat baik.',
-        good: 'Baik. Kualitas layanan ini cukup memuaskan.',
-        average: 'Cukup. Kualitas layanan ini dalam kategori standar.',
-        poor: 'Perlu ditingkatkan. Kualitas layanan ini masih di bawah standar.'
-      }
-    };
-
-    const categoryInterpretations = interpretations[category] || interpretations.overall;
-
-    if (score >= 80) return categoryInterpretations.excellent;
-    if (score >= 60) return categoryInterpretations.good;
-    if (score >= 40) return categoryInterpretations.average;
-    return categoryInterpretations.poor;
+  const getScoreInterpretation = (score) => {
+    if (score >= 80) return 'Sangat Baik';
+    if (score >= 60) return 'Baik';
+    if (score >= 40) return 'Cukup';
+    return 'Perlu Ditingkatkan';
   };
 
   if (loading) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-t-blue-500 border-b-blue-500 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
+        <LoadingEffect variant="shimmer" size="lg" text="Memuat detail survei..." />
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8 mt-16 sm:mt-20">
-      {/* Enhanced Breadcrumb Navigation */}
-      <nav className="mb-8" aria-label="Breadcrumb">
-        <ol className="flex items-center flex-wrap space-x-2 text-sm">
-          <li className="flex items-center">
-            <Link 
-              to="/" 
-              className="flex items-center text-secondary-500 hover:text-primary-600 transition-colors duration-200 group"
-            >
-              <span className="flex items-center justify-center h-8 w-8 rounded-full bg-white/80 shadow-sm backdrop-blur-sm border border-gray-100 group-hover:bg-primary-50 group-hover:border-primary-100 transition-all duration-200">
-                <Home className="w-4 h-4 text-secondary-600 group-hover:text-primary-600" />
-              </span>
-              <span className="ml-2 font-medium hidden sm:inline-block">Beranda</span>
-            </Link>
-          </li>
-          <li className="flex items-center text-secondary-400">
-            <ChevronRight className="w-4 h-4 mx-1" strokeWidth={1.5} />
-          </li>
-          <li className="flex items-center">
-            <Link 
-              to="/history" 
-              className="flex items-center text-secondary-500 hover:text-primary-600 transition-colors duration-200 group"
-            >
-              <span className="py-1.5 px-3 rounded-full bg-white/80 shadow-sm backdrop-blur-sm border border-gray-100 font-medium group-hover:bg-primary-50/50 group-hover:border-primary-100/50 transition-all duration-200">
-                Riwayat Survei
-              </span>
-            </Link>
-          </li>
-          <li className="flex items-center text-secondary-400">
-            <ChevronRight className="w-4 h-4 mx-1" strokeWidth={1.5} />
-          </li>
-          <li>
-            <div className="flex items-center px-3 py-1.5 rounded-full bg-primary-50/80 text-primary-900 font-medium shadow-sm backdrop-blur-sm border border-primary-100/50 max-w-[220px]">
-              <span className="truncate">{surveyDetails?.title || 'Detail Survei'}</span>
-            </div>
-          </li>
-        </ol>
-      </nav>
+      {/* Modern Apple-inspired Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { path: '/history', label: 'Riwayat Survei', icon: <FileText className="h-4 w-4" /> },
+          { path: `/history/${responseId}`, label: surveyDetails?.title || 'Detail Survei', icon: <ClipboardCheck className="h-4 w-4" />, current: true }
+        ]}
+      />
       
       {surveyDetails ? (
         <div className="space-y-8">
@@ -538,7 +470,7 @@ const SurveyDetailPage = () => {
                             <span className={`font-medium ${getScoreColorClass(calculatedScores.corruptionPerception)}`}>{Math.round(calculatedScores.corruptionPerception)}%</span>
                           </div>
                           <p className={`text-sm ${getScoreColorClass(calculatedScores.corruptionPerception)}`}>
-                            {getScoreInterpretation(calculatedScores.corruptionPerception, 'corruptionPerception')}
+                            {getScoreInterpretation(calculatedScores.corruptionPerception)}
                           </p>
                         </div>
                       )}
@@ -557,7 +489,7 @@ const SurveyDetailPage = () => {
                             <span className={`font-medium ${getScoreColorClass(calculatedScores.serviceQuality)}`}>{Math.round(calculatedScores.serviceQuality)}%</span>
                           </div>
                           <p className={`text-sm ${getScoreColorClass(calculatedScores.serviceQuality)}`}>
-                            {getScoreInterpretation(calculatedScores.serviceQuality, 'serviceQuality')}
+                            {getScoreInterpretation(calculatedScores.serviceQuality)}
                           </p>
                         </div>
                       )}

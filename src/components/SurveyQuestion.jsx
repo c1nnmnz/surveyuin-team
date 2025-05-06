@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
+import { scrollToNextQuestion as scrollToNextUtils } from '../utils/scrollUtils';
 
 // Extract questions to be available for import
 export const surveyQuestions = [
@@ -789,57 +790,6 @@ export const SurveyQuestionList = ({
     return null;
   };
   
-  // Function to scroll to the next question and highlight it
-  const scrollToNextQuestion = (currentQuestionId) => {
-    // Find the next question
-    const nextQuestionId = findNextQuestion(currentQuestionId);
-    
-    if (nextQuestionId && questionRefs.current[nextQuestionId]) {
-      // Get the current and next elements
-      const currentElement = questionRefs.current[currentQuestionId];
-      const nextElement = questionRefs.current[nextQuestionId];
-      
-      // Calculate window dimensions and position
-      const windowHeight = window.innerHeight;
-      const nextRect = nextElement.getBoundingClientRect();
-      const nextElementHeight = nextRect.height;
-      
-      // Define a comfortable margin to show above the question (reduced from 160px)
-      const scrollMargin = 80; // You can adjust this value to control scroll distance
-      
-      // Calculate target scroll position
-      // We want to position the element with enough margin at the top
-      const targetScrollPosition = window.pageYOffset + nextRect.top - scrollMargin;
-      
-      // Check if element is too large for viewport
-      const isElementTooLarge = nextElementHeight > (windowHeight - scrollMargin * 1.5);
-      
-      // Check if already in view and fully visible
-      const isFullyVisible = (
-        nextRect.top >= scrollMargin &&
-        nextRect.bottom <= windowHeight - 20
-      );
-      
-      // Only scroll if not fully visible
-      if (!isFullyVisible) {
-        // If element is too large, scroll to top of element
-        // Otherwise, try to center it
-        window.scrollTo({
-          top: targetScrollPosition,
-          behavior: 'smooth'
-        });
-        
-        // Add visual cue to highlight where the user should focus
-        setHighlightedQuestion(nextQuestionId);
-        
-        // Remove highlight after animation completes
-        setTimeout(() => {
-          setHighlightedQuestion(null);
-        }, 800);
-      }
-    }
-  };
-  
   // Enhanced onSelectOption function that also triggers scrolling
   const handleSelectOption = (questionId, value) => {
     // First call the original onSelectOption
@@ -851,7 +801,7 @@ export const SurveyQuestionList = ({
     // Then scroll to the next question immediately without delay
     // to make the scrolling experience faster
     setTimeout(() => {
-      scrollToNextQuestion(questionId);
+      scrollToNextUtils(questionId, allQuestions, questionRefs.current, setHighlightedQuestion);
     }, 0);
   };
   

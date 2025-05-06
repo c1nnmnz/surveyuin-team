@@ -47,15 +47,24 @@ import {
   DollarSign,
   Settings
 } from 'lucide-react';
-import { useDirectoryStore } from '../store/directoryStore';
-import { useUserStore } from '../store/userStore';
-import { useSurveyStore } from '../store/surveyStore';
-import Button3D from '../components/Button3D';
+import { useDirectoryStore } from '@/store/directoryStore';
+import { useUserStore } from '@/store/userStore';
+import { useSurveyStore } from '@/store/surveyStore';
+import Button3D from '@/components/Button3D';
 import clsx from 'clsx';
 
 // Import the TestimonialSection directly instead of lazy loading for now
 // We'll fix lazy loading after we get the page working
-import TestimonialSection from '../components/home/TestimonialSection';
+import TestimonialSection from '@/components/home/TestimonialSection';
+
+// Import new utility functions and hooks
+import useDeviceDetection from '@/hooks/useDeviceDetection';
+import useOptimizedScroll from '@/hooks/useOptimizedScroll';
+import { calculateAverageRating, getScoreColorClass, getScoreInterpretation } from '@/utils/scoreUtils';
+import { formatDate, formatShortDate, formatRelativeDate } from '@/utils/dateUtils';
+import StarRating, { SimpleStarRating } from '@/components/ui/StarRating';
+import StatCard from '@/components/ui/StatCard';
+import { TextSkeleton, CardSkeleton, ListSkeleton } from '@/components/ui/Skeleton';
 
 // Lightweight loading component for suspense fallback
 const LoadingFallback = () => (
@@ -64,91 +73,13 @@ const LoadingFallback = () => (
   </div>
 );
 
-// First, enhance the device detection for newer iPhone models with Dynamic Island
-const useLowEndDevice = () => {
-  const [isLowEnd, setIsLowEnd] = useState(false);
-  const [isAndroid, setIsAndroid] = useState(false);
-  const [isIOSDevice, setIsIOSDevice] = useState(false);
-  
-  useEffect(() => {
-    // Enhanced heuristic for low-end devices with Android optimization
-    const checkDeviceCapabilities = () => {
-      // Detect Android specifically
-      const isAndroidDevice = /Android/i.test(navigator.userAgent);
-      setIsAndroid(isAndroidDevice);
-      
-      // Detect iOS devices
-      const isIOSDeviceCheck = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      setIsIOSDevice(isIOSDeviceCheck);
-      
-      // Enhanced Android detection - some Android devices need optimization even if they're not technically "low-end"
-      if (isAndroidDevice) {
-        // Check for Android version as some older Android versions have rendering issues
-        const androidVersionMatch = navigator.userAgent.match(/Android\s([0-9.]+)/);
-        const androidVersion = androidVersionMatch ? parseFloat(androidVersionMatch[1]) : 0;
-        
-        // Android devices with older OS or slower processors should be treated as low-end
-        if (androidVersion < 10) {
-          setIsLowEnd(true);
-          return true;
-        }
-      }
-      
-      // Safely check for navigator properties that might not exist in all browsers
-      const memoryLimit = navigator.deviceMemory ? navigator.deviceMemory < 4 : false;
-      
-      // More comprehensive connection check
-      const connectionType = navigator.connection ? 
-        (navigator.connection.effectiveType === 'slow-2g' || 
-         navigator.connection.effectiveType === '2g' || 
-         navigator.connection.effectiveType === '3g' ||
-         navigator.connection.downlink < 1.5) : false;
-        
-      const screenSize = window.screen.width * window.screen.height;
-      const isSmallScreen = screenSize < 1000000; // ~HD resolution threshold
-      
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      // Detect if device is reporting low battery - some devices throttle performance
-      const isBatteryLow = 'getBattery' in navigator ? 
-        navigator.getBattery().then(battery => battery.level < 0.15) : false;
-      
-      // For iOS devices, assume better performance but still considerate
-      // If it's iOS but with slow connection, still consider it low-end
-      if (isIOSDeviceCheck && connectionType) return true;
-      // Most modern iOS devices handle animations well
-      if (isIOSDeviceCheck) return false;
-      
-      // Consider Android devices that have any performance limitations as needing optimization
-      const isLowEndDevice = isAndroidDevice ? 
-        (memoryLimit || connectionType || isSmallScreen || isBatteryLow) :
-        ((memoryLimit || connectionType) && isMobile);
-        
-      setIsLowEnd(isLowEndDevice);
-      return isLowEndDevice;
-    };
-    
-    try {
-      checkDeviceCapabilities();
-    } catch (error) {
-      // If there's any error in detection, default to false
-      setIsLowEnd(false);
-      setIsAndroid(false);
-      setIsIOSDevice(false);
-      console.error("Error detecting device capabilities:", error);
-    }
-  }, []);
-  
-  return { isLowEnd, isAndroid, isIOS: isIOSDevice };
-};
-
 // Optimized CountUp component with better performance
 const CountUp = ({ end, duration = 1550 }) => {
   const [count, setCount] = useState(0);
   const countRef = useRef(null);
   const startTime = useRef(null);
   const endValue = useRef(end);
-  const { isLowEnd, isAndroid } = useLowEndDevice();
+  const { isLowEnd, isAndroid } = useDeviceDetection();
 
   useEffect(() => {
     endValue.current = end;
@@ -187,44 +118,9 @@ const CountUp = ({ end, duration = 1550 }) => {
   return <>{count}</>;
 };
 
-// Memoized StarRating component
-const StarRating = memo(({ score }) => {
-  if (score === "N/A") return null;
-  
-  const numericScore = parseFloat(score);
-  const fullStars = Math.floor(numericScore);
-  const hasHalfStar = numericScore - fullStars >= 0.5;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-  
-  return (
-    <div className="flex justify-center mt-1 mb-1">
-      {fullStars > 0 && 
-        <>
-          {[...Array(fullStars)].map((_, i) => (
-            <Star key={`full-${i}`} className="w-4 h-4 text-amber-500 fill-amber-500" />
-          ))}
-        </>
-      }
-      {hasHalfStar && (
-        <span className="relative">
-          <Star className="w-4 h-4 text-gray-300" />
-          <Star className="w-4 h-4 text-amber-500 fill-amber-500 absolute inset-0 overflow-hidden" style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }} />
-        </span>
-      )}
-      {emptyStars > 0 && 
-        <>
-          {[...Array(emptyStars)].map((_, i) => (
-            <Star key={`empty-${i}`} className="w-4 h-4 text-gray-300" />
-          ))}
-        </>
-      }
-    </div>
-  );
-});
-
 // Optimized placeholder with reduced animation for Android
 const ImagePlaceholder = () => {
-  const { isAndroid } = useLowEndDevice();
+  const { isAndroid } = useDeviceDetection();
   
   return (
     <div className={`bg-gray-100 ${!isAndroid ? 'animate-pulse' : ''} w-full h-full rounded-lg`}></div>
@@ -250,14 +146,25 @@ const HomePage = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
-  const { isLowEnd, isAndroid: detectedAndroid } = useLowEndDevice();
+  const { isLowEnd, isAndroid: detectedAndroid } = useDeviceDetection();
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [renderedServices, setRenderedServices] = useState([]);
   const [shouldOptimizeScroll, setShouldOptimizeScroll] = useState(false);
   
-  // Last scroll position for scroll optimization
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
+  const scrollToRef = useRef(null);
+  
+  // Setup optimized scroll handling
+  const handleScroll = (scrollY) => {
+    setIsScrolled(scrollY > 60);
+  };
+  
+  // Use our custom optimized scroll hook at the top level, not inside useEffect
+  const { scrollToElement } = useOptimizedScroll(handleScroll, {
+    throttleMs: isLowEnd ? 100 : 50,
+    dependencies: [isLowEnd]
+  });
   
   // Refs for scroll tracking - use fewer refs for performance
   const sectionRefs = useRef({
@@ -320,70 +227,6 @@ const HomePage = () => {
   
   const displayServices = getTabServices();
   
-  // Calculate average rating from completed surveys
-  const calculateAverageRating = () => {
-    if (allResponses.length === 0) return "N/A";
-    
-    // Calculate overall score for each response using similar logic to SurveyDetailPage
-    const responseScores = allResponses.map(response => {
-      if (!response.answers || !Array.isArray(response.answers) || response.answers.length === 0) return 0;
-      
-      // Calculate total score based on answers (assuming 1-6 scale like in SurveyDetailPage)
-      let totalScore = 0;
-      let maxPossibleScore = 0;
-      
-      response.answers.forEach(answer => {
-        // Only count numeric answers
-        const answerValue = parseInt(answer.answer);
-        if (!isNaN(answerValue)) {
-          totalScore += answerValue;
-          // Assuming max score is 6 for each question (from SurveyDetailPage logic)
-          maxPossibleScore += 6;
-        }
-      });
-      
-      // Convert to percentage (0-100) similar to SurveyDetailPage
-      const score = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
-      return Math.round(score * 10) / 10; // Round to 1 decimal place
-    });
-    
-    // Filter out any zero scores
-    const validScores = responseScores.filter(score => score > 0);
-    
-    if (validScores.length === 0) return "N/A";
-    
-    // Calculate the average score
-    const averageScore = validScores.reduce((total, score) => total + score, 0) / validScores.length;
-    
-    // Convert to 5-star scale (since our star rating shows 5 stars)
-    // 100% = 5 stars, so divide by 20
-    const starRating = (averageScore / 20).toFixed(1);
-    
-    return starRating;
-  };
-
-  // Get color class based on score - similar to SurveyDetailPage
-  const getScoreColorClass = (score) => {
-    if (score === "N/A") return "text-gray-500";
-    
-    const numericScore = parseFloat(score);
-    if (numericScore >= 4.0) return 'text-green-600';
-    if (numericScore >= 3.0) return 'text-blue-600';
-    if (numericScore >= 2.0) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  // Get interpretation text based on score - similar to SurveyDetailPage
-  const getScoreInterpretation = (score) => {
-    if (score === "N/A") return "Belum ada penilaian";
-    
-    const numericScore = parseFloat(score);
-    if (numericScore >= 4.0) return 'Sangat Baik';
-    if (numericScore >= 3.0) return 'Baik';
-    if (numericScore >= 2.0) return 'Cukup';
-    return 'Perlu Ditingkatkan';
-  };
-
   // Stats data
   const stats = [
     { 
@@ -402,7 +245,7 @@ const HomePage = () => {
     },
     { 
       title: 'Survey Terakhir', 
-      value: allResponses.length > 0 ? new Date(Math.max(...allResponses.map(r => new Date(r.timestamp || Date.now())))).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'}) : '-', 
+      value: allResponses.length > 0 ? new Date(Math.max(...allResponses.map(r => new Date(r.completedAt || r.timestamp || Date.now())))).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'}) : '-', 
       subtitle: allResponses.length > 0 ? 'Terakhir mengisi survey' : 'Belum ada survey terisi',
       icon: <Calendar className="w-5 h-5 md:w-6 md:h-6 text-violet-600" />,
       bgGradient: 'from-[#fdfaff] via-[#f9f5ff] to-[#f3ebff]',
@@ -429,10 +272,14 @@ const HomePage = () => {
     { 
       title: 'Kepuasan Anda', 
       subtitle: `Berdasarkan ${allResponses.length} Survei Layanan`,
-      value: calculateAverageRating(), 
+      value: allResponses.length > 0 ? calculateAverageRating(allResponses) : 'N/A', 
       starRating: true,
-      interpretation: getScoreInterpretation(calculateAverageRating()),
-      colorClass: getScoreColorClass(calculateAverageRating()),
+      interpretation: allResponses.length > 0 
+        ? getScoreInterpretation(calculateAverageRating(allResponses)) 
+        : 'Belum ada penilaian',
+      colorClass: getScoreColorClass(
+        allResponses.length > 0 ? calculateAverageRating(allResponses) : 'N/A'
+      ),
       icon: <Award className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />,
       link: "/history",
       bgGradient: 'from-[#f5faff] via-[#f0f7ff] to-[#e6f0ff]',
@@ -448,47 +295,43 @@ const HomePage = () => {
   const testimonials = [
     {
       id: 1,
-      name: 'Ari Ganteng',
+      name: 'Muhamad Arianoor',
       role: 'Mahasiswa Politeknik Negeri Tanah Laut',
       content: 'Aplikasi yang sangat membantu untuk memberikan feedback ke layanan kampus. Tampilannya mudah digunakan dan responsif.',
       rating: 5,
       isFeatured: true,
-      timestamp: '3 hari yang lalu',
       profileImage: null,
       gender: 'male'
     },
     {
       id: 2,
-      name: 'Anonymous',
-      role: 'Anonymous',
-      content: 'Kok Ngeleg di HP Aku yah 😑',
-      rating: 1,
+      name: 'Salwa Fitria',
+      role: 'Mahasiswa FTK',
+      content: 'Sangat membantu aku dalam memberikan penilaian terhadap layanan MIKWA FTK, semoga bisa dikembangkan lagi',
+      rating: 4,
       isFeatured: false,
-      timestamp: 'Baru Saja',
       profileImage: null,
       gender: 'female'
     },
     {
       id: 3,
-      name: 'Ahmad Fauzi',
-      role: 'Dosen Fakultas Ekonomi',
+      name: 'Muhammad Sumbul',
+      role: 'Dosen FEBI',
       content: 'Platform yang sangat bermanfaat untuk mendapatkan masukan dari mahasiswa. Sangat merekomendasikan untuk digunakan di semua layanan kampus.',
       rating: 5,
       isFeatured: false,
-      timestamp: '2 minggu yang lalu',
       profileImage: null,
       gender: 'male'
     },
     {
       id: 4,
-      name: 'Anonymous',
-      role: 'Mahasiswa Politeknik Negeri Tanah Laut',
-      content: 'Semangat ketua!',
+      name: 'Aulia Nisa',
+      role: 'Staff',
+      content: 'Sangat membantu kami untuk mengavaluasi layanan yang telah diterima pengguna',
       rating: 5,
       isFeatured: false,
-      timestamp: 'Baru Saja',
       profileImage: null,
-      gender: 'male'
+      gender: 'female'
     }
   ];
   
@@ -532,61 +375,6 @@ const HomePage = () => {
     };
   }, []);
   
-  // Handle scroll effects with performance optimization
-  useEffect(() => {
-    // Skip complex scroll handling on low-end devices
-    if (isLowEnd) {
-      setVisibleSection('all');
-      return;
-    }
-    
-    const handleScroll = () => {
-      // Use optimized scroll handling for mobile/Android
-      if (shouldOptimizeScroll) {
-        lastScrollY.current = window.scrollY;
-        
-        if (!ticking.current) {
-          // Use requestAnimationFrame to limit scroll event processing
-          requestAnimationFrame(() => {
-            // Simple states that don't trigger expensive re-renders
-            setIsScrolled(lastScrollY.current > 60);
-            ticking.current = false;
-          });
-          
-          ticking.current = true;
-        }
-        return;
-      }
-      
-      // Regular scroll handling for desktop
-      setIsScrolled(window.scrollY > 60);
-      
-      // Track section visibility
-      const viewportHeight = window.innerHeight;
-      
-      // Use refs object for more efficient access
-      const sections = Object.entries(sectionRefs.current).filter(([_, ref]) => ref);
-      
-      for (const [key, ref] of sections) {
-        const rect = ref?.getBoundingClientRect();
-        if (rect && rect.top < viewportHeight * 0.7) {
-          setVisibleSection(key);
-        }
-      }
-    };
-    
-    const optimizedScroll = isAndroid || isLowEnd 
-      ? throttle(handleScroll, 100) // Use throttle for Android
-      : handleScroll;
-    
-    window.addEventListener('scroll', optimizedScroll, { passive: true });
-    
-    // Initial call
-    handleScroll();
-    
-    return () => window.removeEventListener('scroll', optimizedScroll);
-  }, [isLowEnd, isAndroid, shouldOptimizeScroll]);
-  
   // Preload critical assets with priority
   useEffect(() => {
     // Skip intensive preloads on low-end devices
@@ -615,18 +403,6 @@ const HomePage = () => {
 
     return () => clearTimeout(timeout);
   }, [isLowEnd, isAndroid]);
-  
-  // Throttle function for scroll optimization
-  function throttle(callback, delay) {
-    let lastCall = 0;
-    return function(...args) {
-      const now = Date.now();
-      if (now - lastCall >= delay) {
-        lastCall = now;
-        callback.apply(this, args);
-      }
-    };
-  }
   
   // Generate gradient colors for service cards
   const getServiceGradient = (serviceName) => {
@@ -753,28 +529,27 @@ const HomePage = () => {
     });
   };
   
-  // Use more efficient rendering for starred cards on Android
+  // Update the renderStarRating function to remove the duplicate score display
   const renderStarRating = (score) => {
-    if (score === "N/A") return null;
-    
-    if (isAndroid) {
-      // Simplified star rendering for Android
-  return (
-        <div className="flex justify-center mt-1 mb-1">
-          <div className="flex">
-            {[1, 2, 3, 4, 5].map(star => (
-              <Star 
-                key={star} 
-                className={`w-4 h-4 ${star <= Math.round(parseFloat(score)) ? 'text-amber-500 fill-amber-500' : 'text-gray-300'}`} 
-              />
-            ))}
-          </div>
-        </div>
-      );
+    if (score === "N/A" || !score) {
+      return <div className="text-gray-400 text-sm">Belum ada penilaian</div>;
     }
     
-    // Use the memoized version for normal devices
-    return <StarRating score={score} />;
+    // Parse score as number and ensure it's valid
+    const numericScore = typeof score === 'number' ? 
+      score : 
+      (parseFloat(score) || 0);
+    
+    // Round to nearest 0.1 for display
+    const displayScore = Math.round(numericScore * 10) / 10;
+    
+    // Use the optimized simple star rating for Android or low-end devices
+    if (isAndroid || isLowEnd) {
+      return <SimpleStarRating score={displayScore} showScore={false} size="md" />;
+    }
+    
+    // Use the full-featured star rating for other devices
+    return <StarRating score={displayScore} showScore={false} size="md" />;
   };
   
   // Optimized stats section for Android
@@ -787,190 +562,98 @@ const HomePage = () => {
       } : {}}
     >
       {stats.map((stat) => (
-        <div
-          key={stat.title} 
-          className={`rounded-2xl bg-gradient-to-br ${stat.bgGradient} backdrop-blur-sm p-4 md:p-6 text-center cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 relative overflow-hidden group flex flex-col min-h-[180px] md:min-h-[200px] justify-between ${stat.link ? 'hover:-translate-y-1 active:translate-y-0 active:shadow-md' : ''}`}
-          style={{
-            ...isAndroid ? { willChange: 'transform', transform: 'translateZ(0)' } : {},
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
-            background: stat.overlayGradient,
-            borderColor: 'rgba(255, 255, 255, 0.9)'
-          }}
+        <StatCard
+          key={stat.title}
+          title={stat.title}
+          value={stat.value}
+          subtitle={stat.subtitle}
+          icon={stat.icon}
+          bgGradient={stat.bgGradient}
+          overlayGradient={stat.overlayGradient}
+          textColor={stat.textColor}
+          iconBg={stat.iconBg}
+          iconRing={stat.iconRing}
+          link={stat.link}
+          colorClass={stat.colorClass}
+          starRating={stat.starRating}
+          ratingComponent={stat.starRating ? renderStarRating(stat.value) : null}
+          interpretation={stat.interpretation}
           onClick={() => stat.link && navigate(stat.link)}
-        >
-          {/* Subtle glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-2xl"></div>
-          
-          <div className="flex flex-col items-center flex-grow relative z-10">
-            <div 
-              className={`w-12 h-12 md:w-14 md:h-14 mx-auto rounded-full flex items-center justify-center mb-3 md:mb-4 ${stat.iconBg} shadow-sm ring-1 ${stat.iconRing} ring-inset relative z-10 group-hover:scale-105 transition-transform duration-200`}
-              style={{ boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.7) inset, 0 3px 6px -1px rgba(0, 0, 0, 0.06)' }}
-            >
-              {stat.icon}
-            </div>
-            <h3 className={`text-2xl md:text-3xl font-bold mb-1 font-display tracking-tight ${stat.colorClass || stat.textColor}`}>
-              {stat.value}
-            </h3>
-            {stat.starRating && renderStarRating(stat.value)}
-            <p className="text-sm md:text-base font-medium opacity-90">{stat.title}</p>
-            {stat.subtitle && (
-              <p className="text-xs opacity-70 mt-1">{stat.subtitle}</p>
-            )}
-          </div>
-          
-          <div className="mt-auto relative z-10">
-            {stat.interpretation && (
-              <p className={`text-xs md:text-sm font-medium mt-1 ${stat.colorClass || 'opacity-80'}`}>{stat.interpretation}</p>
-            )}
-            {stat.link && (
-              <div className="mt-2 text-xs flex items-center justify-center opacity-80 group-hover:opacity-100">
-                <ChevronRight className="w-3 h-3 ml-0.5 group-hover:translate-x-0.5 transition-transform duration-200" />
-              </div>
-            )}
-          </div>
-        </div>
+        />
       ))}
     </div>
   );
   
-  // Within the HomePage component, add a useEffect for scroll optimization
-  useEffect(() => {
-    // Apply CSS scroll behavior for smoother scrolling on low-end devices
-    if (isLowEnd || isAndroid) {
-      // Add CSS for smoother scrolling
-      const style = document.createElement('style');
-      style.textContent = `
-        .smooth-scroll-container {
-          scroll-behavior: smooth;
-          -webkit-overflow-scrolling: touch;
-          overscroll-behavior: contain;
-          scroll-snap-type: y proximity;
-        }
-        
-        .scroll-snap-item {
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
-        }
-        
-        .android-optimized {
-          backface-visibility: hidden;
-          perspective: 1000;
-          transform: translate3d(0,0,0);
-          will-change: transform;
-        }
-        
-        @supports (scroll-behavior: smooth) {
-          html {
-            scroll-behavior: ${isLowEnd ? 'auto' : 'smooth'};
-          }
-        }
-        
-        @media (prefers-reduced-motion: reduce) {
-          html {
-            scroll-behavior: auto !important;
-          }
-        }
-      `;
-      document.head.appendChild(style);
-      
-      // Limit framerate on very low-end devices
-      if (isLowEnd) {
-        // Use requestAnimationFrame throttling for ultra-smooth scrolling
-        let lastKnownScrollPosition = 0;
-        let ticking = false;
-        let scrollTimeout;
-        
-        const handleScroll = () => {
-          lastKnownScrollPosition = window.scrollY;
-          
-          if (!ticking) {
-            // Use timeout to ensure we're not overloading the device
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-              window.requestAnimationFrame(() => {
-                // Do minimal work here - just what's absolutely necessary
-                setIsScrolled(lastKnownScrollPosition > 60);
-                ticking = false;
-              });
-            }, 50); // Lower interval for smoother feeling
-            
-            ticking = true;
-          }
-        };
-        
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        
-        return () => {
-          window.removeEventListener('scroll', handleScroll);
-          clearTimeout(scrollTimeout);
-          document.head.removeChild(style);
-        };
-      }
-      
-      return () => {
-        document.head.removeChild(style);
-      };
-    }
-  }, [isLowEnd, isAndroid]);
-
   // Add virtual list rendering for service lists
   const VirtualizedList = ({ items, renderItem, itemHeight = 100, windowSize = 10 }) => {
     const [scrollTop, setScrollTop] = useState(0);
     const containerRef = useRef(null);
+    const { shouldOptimizeScroll } = useDeviceDetection();
     
-    useEffect(() => {
-      const handleScroll = () => {
-        if (containerRef.current) {
-          setScrollTop(containerRef.current.scrollTop);
-        }
-      };
-      
-      const current = containerRef.current;
-      if (current) {
-        current.addEventListener('scroll', handleScroll, { passive: true });
+    // Optimized scroll handler
+    const handleScroll = () => {
+      if (containerRef.current) {
+        setScrollTop(containerRef.current.scrollTop);
       }
+    };
+    
+    // Set up optimized scroll tracking
+    useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      
+      // Use passive listener for better performance
+      container.addEventListener('scroll', handleScroll, { passive: true });
       
       return () => {
-        if (current) {
-          current.removeEventListener('scroll', handleScroll);
-        }
+        container.removeEventListener('scroll', handleScroll);
       };
     }, []);
     
+    // Virtual rendering calculations
     const totalHeight = items.length * itemHeight;
     const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - windowSize);
-    const endIndex = Math.min(
-      items.length - 1,
-      Math.floor((scrollTop + (containerRef.current?.clientHeight || 0)) / itemHeight) + windowSize
-    );
+    const endIndex = Math.min(items.length - 1, Math.floor((scrollTop + containerRef.current?.clientHeight || 0) / itemHeight) + windowSize);
     
-    const visibleItems = items.slice(startIndex, endIndex + 1);
+    // Render only visible items plus buffer
+    const visibleItems = shouldOptimizeScroll
+      ? items.slice(startIndex, endIndex + 1)
+      : items;
+    
+    // Get spacer size
+    const topSpacerHeight = shouldOptimizeScroll ? startIndex * itemHeight : 0;
+    const bottomSpacerHeight = shouldOptimizeScroll ? (items.length - endIndex - 1) * itemHeight : 0;
     
     return (
       <div 
-        ref={containerRef}
-        className="overflow-auto h-[500px] will-change-scroll"
-        style={{ 
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain'
-        }}
+        ref={containerRef} 
+        className="overflow-auto rounded-lg"
+        style={{ height: '100%', position: 'relative' }}
       >
-        <div style={{ height: totalHeight, position: 'relative' }}>
-          {visibleItems.map((item, index) => (
-            <div 
-              key={startIndex + index}
-              style={{
-                position: 'absolute',
-                top: (startIndex + index) * itemHeight,
-                height: itemHeight,
-                width: '100%'
-              }}
-            >
-              {renderItem(item, startIndex + index)}
-            </div>
-          ))}
+        {/* Top spacer */}
+        {shouldOptimizeScroll && topSpacerHeight > 0 && (
+          <div style={{ height: `${topSpacerHeight}px` }} />
+        )}
+        
+        {/* Visible items */}
+        {visibleItems.map((item, index) => (
+          <div key={`${item.id || index}`} style={{ height: `${itemHeight}px` }}>
+            {renderItem(item, startIndex + index)}
           </div>
-        </div>
+        ))}
+        
+        {/* Bottom spacer */}
+        {shouldOptimizeScroll && bottomSpacerHeight > 0 && (
+          <div style={{ height: `${bottomSpacerHeight}px` }} />
+        )}
+        
+        {/* Show all items rendered indicator during dev */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="fixed bottom-0 right-0 bg-blue-100 text-blue-800 px-2 py-1 text-xs rounded-tl-lg">
+            Rendering {visibleItems.length} of {items.length} items
+          </div>
+        )}
+      </div>
     );
   };
   

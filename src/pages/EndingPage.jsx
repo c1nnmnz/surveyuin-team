@@ -124,22 +124,22 @@ const EndingPage = () => {
     }
     
     // Try to get the service information
-    try {
-      console.log('Fetching service info for ID:', serviceId);
-      // Try both string and number ID versions
-      const service = getServiceById(serviceId) || 
-                     getServiceById(parseInt(serviceId, 10)) || 
-                     getServiceById(serviceId.toString());
-      
-      if (service) {
-        console.log('Found service:', service);
-        setServiceName(service.name || 'Layanan');
-      } else {
-        console.warn('Service not found for ID:', serviceId);
+      try {
+        console.log('Fetching service info for ID:', serviceId);
+        // Try both string and number ID versions
+        const service = getServiceById(serviceId) || 
+                       getServiceById(parseInt(serviceId, 10)) || 
+                       getServiceById(serviceId.toString());
+        
+        if (service) {
+          console.log('Found service:', service);
+          setServiceName(service.name || 'Layanan');
+        } else {
+          console.warn('Service not found for ID:', serviceId);
+        }
+      } catch (error) {
+        console.error('Error getting service info:', error);
       }
-    } catch (error) {
-      console.error('Error getting service info:', error);
-    }
     
     // If we don't have a response ID, try to get the latest response
     if (!responseId) {

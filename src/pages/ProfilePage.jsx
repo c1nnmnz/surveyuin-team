@@ -8,6 +8,9 @@ import { useDirectoryStore } from '../store/directoryStore';
 import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
 import Breadcrumb from '../components/ui/Breadcrumb';
+import Skeleton from '../components/ui/skeleton';
+import { TextSkeleton, CircularSkeleton, CardSkeleton, RectangularSkeleton } from '../components/ui/skeleton';
+import LoadingEffect from '../components/ui/LoadingEffect';
 
 // Get default avatar based on gender - keep in sync with Header.jsx
 const getDefaultAvatar = (user) => {
@@ -295,9 +298,66 @@ const ProfilePage = () => {
   if (isLoading) {
     console.log("Showing loading state");
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-600 font-medium">Memuat profil Anda...</p>
+      <div className="pt-20 pb-12 bg-gray-50">
+        {/* Breadcrumb skeleton */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <TextSkeleton width="120px" height="20px" />
+        </div>
+        
+        <div className="min-h-screen pt-10 pb-12 px-6 md:px-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="space-y-8">
+              {/* Header section skeleton */}
+              <div className="text-center mb-8">
+                <TextSkeleton width="250px" height="32px" className="mx-auto mb-2" />
+                <TextSkeleton width="180px" height="20px" className="mx-auto" />
+              </div>
+              
+              {/* Main Content */}
+              <div className="grid grid-cols-12 gap-6">
+                {/* Profile Skeleton */}
+                <div className="col-span-12 space-y-6">
+                  <div className="bg-white rounded-3xl shadow-md overflow-hidden p-7">
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-6 relative">
+                      <CircularSkeleton width="96px" height="96px" />
+                      
+                      <div className="flex flex-col text-center md:text-left">
+                        <TextSkeleton width="200px" height="28px" className="mb-2" />
+                        <RectangularSkeleton width="120px" height="28px" className="rounded-full mx-auto md:mx-0 mb-5" />
+                        
+                        <div className="mt-5 space-y-3">
+                          <TextSkeleton width="250px" height="20px" />
+                          <TextSkeleton width="200px" height="20px" />
+                          <TextSkeleton width="300px" height="20px" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Recent Surveys Skeleton */}
+                  <div className="bg-white rounded-2xl shadow-md p-7">
+                    <div className="flex items-center justify-between mb-5">
+                      <TextSkeleton width="200px" height="24px" />
+                      <CircularSkeleton width="48px" height="48px" />
+                    </div>
+                    
+                    {/* Skeleton survey items */}
+                    <div className="space-y-3">
+                      {[...Array(3)].map((_, i) => (
+                        <Skeleton 
+                          key={i}
+                          variant="rectangular" 
+                          height="80px" 
+                          className="rounded-xl" 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

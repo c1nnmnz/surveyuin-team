@@ -70,6 +70,9 @@ import { useUserStore } from '../store/userStore';
 import Breadcrumb from '../components/ui/Breadcrumb';
 import { Badge } from "../components/ui/badge";
 import { toast } from "../hooks/use-toast.jsx";
+import LoadingEffect from '../components/ui/LoadingEffect';
+import Skeleton from '../components/ui/skeleton';
+import { TextSkeleton } from '../components/ui/skeleton';
 
 const ServiceDetailPage = () => {
   const { id } = useParams();
@@ -78,6 +81,7 @@ const ServiceDetailPage = () => {
   const { isAuthenticated } = useUserStore();
   const [service, setService] = useState(null);
   const [scrollY, setScrollY] = useState(0);
+  const [loading, setLoading] = useState(true);
   
   // Refs
   const pageRef = useRef(null);
@@ -96,17 +100,23 @@ const ServiceDetailPage = () => {
   
   // Service data fetching
   useEffect(() => {
+    setLoading(true);
     const serviceData = getServiceById(id);
     
-    if (serviceData) {
-      document.title = `${serviceData.name} | UIN Antasari`;
-      setService(serviceData);
-    } else {
-      navigate('/not-found');
-    }
+    // Simulate loading for better UX
+    const timer = setTimeout(() => {
+      if (serviceData) {
+        document.title = `${serviceData.name} | UIN Antasari`;
+        setService(serviceData);
+      } else {
+        navigate('/not-found');
+      }
+      setLoading(false);
+    }, 500);
     
     return () => {
       document.title = 'UIN Antasari';
+      clearTimeout(timer);
     };
   }, [id, getServiceById, navigate]);
   
@@ -126,29 +136,56 @@ const ServiceDetailPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8">
+        <div className="max-w-3xl mx-auto">
+          <TextSkeleton width="150px" height="24px" className="mb-6" />
+          
+          <div className="rounded-2xl overflow-hidden bg-white dark:bg-gray-800 shadow-lg">
+            {/* Hero image skeleton */}
+            <Skeleton variant="rectangular" height="200px" className="w-full" />
+            
+            {/* Content skeleton */}
+            <div className="p-6">
+              <TextSkeleton width="70%" height="32px" className="mb-3" />
+              <TextSkeleton width="40%" height="20px" className="mb-6" />
+              
+              <div className="flex gap-4 mb-6">
+                <Skeleton variant="rectangular" width="100px" height="40px" className="rounded-md" />
+                <Skeleton variant="rectangular" width="100px" height="40px" className="rounded-md" />
+              </div>
+              
+              <div className="space-y-4 mb-6">
+                <TextSkeleton width="100%" height="16px" />
+                <TextSkeleton width="100%" height="16px" />
+                <TextSkeleton width="80%" height="16px" />
+              </div>
+              
+              <div className="flex justify-center mt-8">
+                <LoadingEffect variant="shimmer" size="lg" text="Memuat informasi layanan..." />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!service) {
     return (
-      <div className="fixed inset-0 flex justify-center items-center bg-white z-50">
-        <motion.div 
-          className="relative flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.div 
-            className="w-16 h-16 rounded-full border-t-2 border-l-2 border-r-2 border-transparent border-t-primary-500"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="absolute text-primary-500 font-light text-sm tracking-widest"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          >
-            UIN
-          </motion.div>
-        </motion.div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <LoadingEffect variant="logo" size="xl" text="Layanan tidak ditemukan" />
+          <div className="mt-8">
+            <Link 
+              to="/directory"
+              className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+            >
+              Kembali ke Direktori
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -271,7 +308,7 @@ const ServiceDetailPage = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
       {/* Using the consistent Breadcrumb component */}
-      <div className="pt-20">
+      <div className="pt-20 sticky top-0 z-10">
         <Breadcrumb 
           items={[
             { path: '/directory', label: 'Layanan' },

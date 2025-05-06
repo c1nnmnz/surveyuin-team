@@ -6,14 +6,17 @@ import { visualizer } from 'rollup-plugin-visualizer'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      // Enable Fast Refresh
+      fastRefresh: true,
+      // Use SWC minify
+      minify: true,
+    }),
     visualizer({
       open: true,
       gzipSize: true,
-      brotliSize: true
-      
-    })
-    
+      brotliSize: true      
+    })    
   ],
   resolve: {
     alias: {
@@ -27,11 +30,30 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 600,
+    // Enable source maps for production builds
+    sourcemap: true,
+    // Enable minification optimizations
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.* in production
+        drop_debugger: true, // Remove debugger statements
+      },
+    },
+    // Split chunks intelligently
     rollupOptions: {
       output: {
+        // Better caching with content hashing
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]',
+        // Intelligently group chunks
         manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-components': [
+          // Core framework
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          
+          // UI components by framework
+          'ui-radix': [
             '@radix-ui/react-accordion',
             '@radix-ui/react-alert-dialog',
             '@radix-ui/react-avatar',
@@ -48,18 +70,63 @@ export default defineConfig({
             '@radix-ui/react-switch',
             '@radix-ui/react-tabs',
             '@radix-ui/react-toast',
+          ],
+          
+          // Style utilities
+          'ui-utils': [
             'class-variance-authority',
             'clsx',
             'tailwind-merge',
-            'lucide-react',
-            '@emotion/react',
-            '@emotion/styled'
           ],
-          'charts': ['chart.js', 'react-chartjs-2'],
+          
+          // Icons
+          'icons': ['lucide-react', '@heroicons/react'],
+          
+          // Animation libraries
+          'animations': ['framer-motion'],
+          
+          // Form libraries
           'forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          
+          // Data management
           'data-management': ['@tanstack/react-query', 'zustand', 'axios'],
+          
+          // Charts and visualization
+          'charts': ['chart.js', 'react-chartjs-2', 'recharts'],
+          
+          // Date handling
+          'date-utils': ['date-fns'],
         }
       }
-    }
-  }
+    },
+    // Optimize output
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096, // 4kb - assets smaller than this will be inlined
+    // Compress resulting output
+    reportCompressedSize: true,
+  },
+  // Enable image optimization
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'framer-motion',
+      'zustand',
+      '@tanstack/react-query'
+    ],
+    // Exclude large dependencies that don't need optimization
+    exclude: [
+      'canvas-confetti'
+    ]
+  },
+  // Better dev server performance
+  server: {
+    hmr: {
+      overlay: true,
+    },
+    open: true,
+    // Add compression for dev server
+    compress: true
+  },
 })

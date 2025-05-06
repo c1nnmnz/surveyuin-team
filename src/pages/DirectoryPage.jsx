@@ -51,6 +51,9 @@ import {
 } from 'lucide-react';
 import { useDirectoryStore } from '../store/directoryStore';
 import Breadcrumb from '../components/ui/Breadcrumb';
+import Skeleton from '../components/ui/skeleton';
+import { CardGridSkeleton, TextSkeleton } from '../components/ui/skeleton';
+import LoadingEffect from '../components/ui/LoadingEffect';
 
 const DirectoryPage = () => {
   const {
@@ -78,12 +81,21 @@ const DirectoryPage = () => {
   const [categories, setCategories] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchInputRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Update local state when store changes
   useEffect(() => {
+    setIsLoading(true);
+    
+    // Simulate loading delay (you can remove this setTimeout when using real API)
+    const timer = setTimeout(() => {
     setFilteredServices(getFilteredServices());
     setFaculties(getFaculties());
     setCategories(getCategories());
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [searchQuery, facultyFilter, categoryFilter, sortBy, sortOrder, getFilteredServices, getFaculties, getCategories]);
 
   // Toggle filters panel on mobile
@@ -432,13 +444,22 @@ const DirectoryPage = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <div className="py-1 px-3 bg-secondary-100 rounded-full text-secondary-700 font-medium text-sm">
+        {isLoading ? (
+          <TextSkeleton width="180px" height="20px" />
+        ) : (
+          <>
           {filteredServices.length} layanan ditemukan
-        </div>
+            {facultyFilter !== 'all' && ` dari ${facultyFilter}`}
+            {categoryFilter !== 'all' && ` kategori ${categoryFilter}`}
+            {searchQuery && ` dengan kata kunci "${searchQuery}"`}
+          </>
+        )}
       </motion.div>
       
       {/* Service cards - consistent grid layout for improved readability */}
-      {filteredServices.length > 0 ? (
+      {isLoading ? (
+        <CardGridSkeleton count={6} columns={3} height={180} />
+      ) : filteredServices.length > 0 ? (
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           initial={{ opacity: 0, y: 20 }}

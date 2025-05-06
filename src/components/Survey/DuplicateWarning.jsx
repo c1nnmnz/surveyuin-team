@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSurveyStore } from "@/store/surveyStore";
 import { useUserStore } from "@/store/userStore";
 import { useDirectoryStore } from "@/store/directoryStore";
+import { formatDate, formatRelativeDate } from '@/utils/dateUtils';
 
 const DuplicateWarning = ({ previousResponse, serviceId, onContinue, onBack }) => {
   const { allResponses, getResponsesForService } = useSurveyStore();
@@ -82,13 +83,13 @@ const DuplicateWarning = ({ previousResponse, serviceId, onContinue, onBack }) =
   
   // Format date and time
   const formattedDate = responseData?.completedAt 
-    ? format(new Date(responseData.completedAt), 'dd MMMM yyyy', { locale: id })
+    ? formatDate(responseData.completedAt)
     : responseData?.createdAt 
-      ? format(new Date(responseData.createdAt), 'dd MMMM yyyy', { locale: id })
+      ? formatDate(responseData.createdAt)
       : responseData?.timestamp 
-        ? format(new Date(responseData.timestamp), 'dd MMMM yyyy', { locale: id })
+        ? formatDate(responseData.timestamp)
         : responseData?.date
-          ? format(new Date(responseData.date), 'dd MMMM yyyy', { locale: id })
+          ? formatDate(responseData.date)
           : '';
   
   const formattedTime = responseData?.completedAt 
@@ -107,21 +108,13 @@ const DuplicateWarning = ({ previousResponse, serviceId, onContinue, onBack }) =
   const hasValidData = responseData && Object.keys(responseData).length > 0;
 
   // Time passed since submission (simplified)
-  const getTimePassed = () => {
-    if (!responseData.completedAt && !responseData.createdAt && !responseData.timestamp) return '';
-    
-    const submissionDate = new Date(responseData.completedAt || responseData.createdAt || responseData.timestamp);
-    const now = new Date();
-    const diffInDays = Math.floor((now - submissionDate) / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays === 0) return 'hari ini';
-    if (diffInDays === 1) return 'kemarin';
-    if (diffInDays < 7) return `${diffInDays} hari yang lalu`;
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} minggu yang lalu`;
-    return `${Math.floor(diffInDays / 30)} bulan yang lalu`;
-  };
-  
-  const timePassed = getTimePassed();
+  const timePassed = responseData?.completedAt 
+    ? formatRelativeDate(responseData.completedAt)
+    : responseData?.createdAt 
+      ? formatRelativeDate(responseData.createdAt)
+      : responseData?.timestamp
+        ? formatRelativeDate(responseData.timestamp)
+        : '';
 
   // Handle reset and continue
   const handleResetAndContinue = () => {

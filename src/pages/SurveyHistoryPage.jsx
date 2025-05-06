@@ -3,9 +3,12 @@ import { useUserStore } from '../store/userStore';
 import { useSurveyStore } from '../store/surveyStore';
 import { useDirectoryStore } from '../store/directoryStore';
 import { Link, useNavigate } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
-import { id } from 'date-fns/locale';
-import { Home, ChevronRight } from 'lucide-react';
+import { parseISO } from 'date-fns';
+import { formatDate } from '@/utils/dateUtils';
+import { Clock, FileText } from 'lucide-react';
+import Breadcrumb from '../components/ui/breadcrumb';
+import LoadingEffect from '../components/ui/LoadingEffect';
+import Skeleton, { ListSkeleton } from '../components/ui/skeleton';
 
 const SurveyHistoryPage = () => {
   const navigate = useNavigate();
@@ -93,46 +96,22 @@ const SurveyHistoryPage = () => {
     processUserSurveys();
   }, [user, isAuthenticated, allResponses, completedServices, getServiceById]);
 
-  // Format the date in Indonesian locale
-  const formatDate = (date) => {
-    if (!date) return '-';
-    return format(date, 'd MMMM yyyy', { locale: id });
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-t-blue-500 border-b-blue-500 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
+        <LoadingEffect variant="shimmer" size="lg" text="Memuat riwayat survei..." />
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8 mt-16 sm:mt-20">
-      {/* Enhanced Breadcrumb Navigation */}
-      <nav className="mb-8" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2 text-sm">
-          <li className="flex items-center">
-            <Link 
-              to="/" 
-              className="flex items-center text-secondary-500 hover:text-primary-600 transition-colors duration-200 group"
-            >
-              <span className="flex items-center justify-center h-8 w-8 rounded-full bg-white/80 shadow-sm backdrop-blur-sm border border-gray-100 group-hover:bg-primary-50 group-hover:border-primary-100 transition-all duration-200">
-                <Home className="w-4 h-4 text-secondary-600 group-hover:text-primary-600" />
-              </span>
-              <span className="ml-2 font-medium hidden sm:inline-block">Beranda</span>
-            </Link>
-          </li>
-          <li className="flex items-center text-secondary-400">
-            <ChevronRight className="w-4 h-4 mx-1" strokeWidth={1.5} />
-          </li>
-          <li>
-            <div className="flex items-center px-3 py-1.5 rounded-full bg-primary-50/80 text-primary-900 font-medium shadow-sm backdrop-blur-sm border border-primary-100/50">
-              <span>Riwayat Survei</span>
-            </div>
-          </li>
-        </ol>
-      </nav>
+      {/* Modern Apple-inspired Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { path: '/history', label: 'Riwayat Survei', icon: <FileText className="h-4 w-4" />, current: true }
+        ]}
+      />
       
       <h1 className="text-3xl font-display font-bold text-secondary-900 mb-6">Riwayat Survei Anda</h1>
       

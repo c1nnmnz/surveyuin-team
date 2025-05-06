@@ -3,7 +3,7 @@ import { useInView } from 'react-intersection-observer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import Skeleton from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import TestimonialCard from './TestimonialCard';
 import useTestimonialStore from '@/store/testimonialStore';
