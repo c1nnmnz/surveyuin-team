@@ -670,6 +670,15 @@ const SurveyQuestion = ({
               whileTap={{ scale: 0.99 }}
             >
               <div className="flex items-center">
+                <input
+                  type="radio"
+                  id={`option-${option.value}-${questionNumber}`}
+                  name={`question-${questionNumber}`}
+                  value={option.value || option.label}
+                  checked={isSelected}
+                  onChange={() => onSelectOption(option.value || option.label)}
+                  className="sr-only" // Visually hidden but semantically present
+                />
                 <div className={`h-5 w-5 rounded-full flex items-center justify-center ${
                   isSelected 
                     ? `border-2 ${selectedBorder} bg-white`
@@ -706,14 +715,6 @@ const SurveyQuestion = ({
                   <span className="text-xs font-medium">Skor {option.score}</span>
                 </motion.div>
               )}
-              
-              <input 
-                type="radio"
-                value={option.value || option.label}
-                checked={isSelected}
-                onChange={() => onSelectOption(option.value || option.label)}
-                className="sr-only"
-              />
             </motion.label>
           );
         })}

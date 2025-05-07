@@ -547,7 +547,10 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const redirectPath = location.state?.from || '/';
-  console.log('Login page will redirect to:', redirectPath);
+  // Get serviceId if it exists in the location state
+  const serviceId = location.state?.serviceId;
+  
+  console.log('Login page will redirect to:', redirectPath, 'serviceId:', serviceId);
   const { isAuthenticated, login, updateProfile, register } = useUserStore();
   const [formSubmitted, setFormSubmitted] = useState(false);
   const today = new Date().toISOString().split('T')[0];
@@ -630,7 +633,20 @@ const LoginPage = () => {
         
         // Show success animation before navigating
         await new Promise(resolve => setTimeout(resolve, 800));
-        navigate(redirectPath);
+
+        // Handle redirection logic based on serviceId
+        if (serviceId) {
+          // If we have a serviceId and the original path was to the survey, go directly to the survey
+          if (redirectPath && redirectPath.startsWith('/survey/')) {
+            navigate(`/survey/${serviceId}`);
+          } else {
+            // Otherwise go to the service detail page
+            navigate(`/service/${serviceId}`);
+          }
+        } else {
+          // Default redirection if no serviceId
+          navigate(redirectPath);
+        }
       } else {
         // Create a new user
         const registerSuccess = await register({
@@ -647,7 +663,20 @@ const LoginPage = () => {
           
           // Show success animation before navigating
           await new Promise(resolve => setTimeout(resolve, 800));
-          navigate(redirectPath);
+          
+          // Handle redirection logic based on serviceId for new registrations too
+          if (serviceId) {
+            // If we have a serviceId and the original path was to the survey, go directly to the survey
+            if (redirectPath && redirectPath.startsWith('/survey/')) {
+              navigate(`/survey/${serviceId}`);
+            } else {
+              // Otherwise go to the service detail page
+              navigate(`/service/${serviceId}`);
+            }
+          } else {
+            // Default redirection if no serviceId
+            navigate(redirectPath);
+          }
         }
       }
     } catch (error) {

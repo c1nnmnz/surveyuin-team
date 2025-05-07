@@ -200,15 +200,15 @@ const SurveyDetailPage = () => {
     
     // Calculate total questions count for each answered category
     const answeredCpQuestions = cpQuestions.filter(q => 
-      answers.some(a => a.questionId === q.id && a.answer)
+      q.id !== 'q34' && answers.some(a => a.questionId === q.id && a.answer)
     );
     
     const answeredSqQuestions = sqQuestions.filter(q => 
-      answers.some(a => a.questionId === q.id && a.answer)
+      q.id !== 'q34' && answers.some(a => a.questionId === q.id && a.answer)
     );
     
     const answeredSiQuestions = siQuestions.filter(q => 
-      answers.some(a => a.questionId === q.id && a.answer)
+      q.id !== 'q34' && answers.some(a => a.questionId === q.id && a.answer)
     );
     
     // Calculate weight based on the number of actually answered questions
@@ -276,6 +276,12 @@ const SurveyDetailPage = () => {
       overallScore = 100;
     }
     
+    // Final check to ensure consistency - if all component scores are 100%, overall should be 100%
+    if (Math.round(cpScore) === 100 && Math.round(sqScore) === 100 && 
+       (answeredSiQuestions.length === 0 || Math.round(siScore) === 100)) {
+      overallScore = 100;
+    }
+    
     console.log("Final calculated scores:", {
       overall: overallScore,
       corruptionPerception: cpScore,
@@ -300,9 +306,24 @@ const SurveyDetailPage = () => {
     // Ensure answers is an array
     const answersArray = Array.isArray(answers) ? answers : [];
     
-    // Get answered questions
+    // Get answered questions, excluding those with score 0 (like question 34)
     const answeredQuestions = questions.filter(q => 
-      answersArray.some(a => a.questionId === q.id && a.answer)
+      answersArray.some(a => {
+        // Find the answer for this question
+        if (a.questionId === q.id && a.answer) {
+          // Check if this is question 34 or any question with score 0
+          if (q.id === 'q34') return false;
+          
+          // For other questions with options, check if the selected option has score 0
+          if (q.options) {
+            const selectedOption = q.options.find(opt => opt.value === a.answer || opt.label === a.answer);
+            if (selectedOption && selectedOption.score === 0) return false;
+          }
+          
+          return true;
+        }
+        return false;
+      })
     );
     
     if (!answeredQuestions.length) return 0;

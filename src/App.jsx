@@ -4,6 +4,7 @@ import { lazyImport, prefetchComponent } from './utils/lazyImport';
 import { initRoutePrefetcher } from './utils/routePrefetcher';
 import Layout from './components/Layout/Layout';
 import { useUserStore } from './store/userStore';
+import { initializeDirectoryStore } from './store/directoryStore';
 import AuthCheck from './components/Auth/AuthCheck';
 // import LoadingPage from './components/ui/LoadingPage';
 import LoadingEffect from './components/ui/LoadingEffect';
@@ -51,9 +52,18 @@ const ScrollToTop = () => {
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useUserStore();
+  const location = useLocation();
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    // Save the path user was trying to access, including service ID from URL
+    // The URL pattern could be /survey/:serviceId or any other protected route
+    const pathname = location.pathname;
+    const serviceId = pathname.split('/').pop();
+    
+    return <Navigate to="/login" state={{ 
+      from: pathname,
+      serviceId: serviceId
+    }} replace />;
   }
   
   return children;
@@ -76,6 +86,12 @@ const PageLoader = ({ text }) => {
 };
 
 function App() {
+  // Initialize the directory store on app startup
+  useEffect(() => {
+    // Initialize the directory store to prevent undefined serviceId issues
+    initializeDirectoryStore();
+  }, []);
+  
   // Prefetch critical pages after initial load
   useEffect(() => {
     // Wait for initial render to complete

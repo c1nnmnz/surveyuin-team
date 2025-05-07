@@ -223,9 +223,8 @@ const EndingPage = () => {
         content: testimonialContent,
         rating: rating,
         sentiment: sentiment,
-        serviceId: serviceId || '1',
+        serviceId: serviceId,
         serviceName: serviceName,
-        timestamp: 'Baru saja'
       };
       
       // Add testimonial to the testimonial system
@@ -239,10 +238,10 @@ const EndingPage = () => {
       setShowConfetti(true);
       setSubmitted(true);
       
-      // Redirect to history page after 3 seconds
+      // Redirect to survey detail page after 3 seconds
       setTimeout(() => {
-        console.log('Redirecting to testimonials page');
-        navigate('/testimonials');
+        console.log('Redirecting to survey history page');
+        navigate(`/history/${serviceId}`);
       }, 3000);
     } catch (error) {
       console.error('Error submitting feedback:', error);
@@ -253,7 +252,8 @@ const EndingPage = () => {
   };
 
   const handleSkipFeedback = () => {
-    navigate('/beranda');
+    // Navigate directly to survey detail page
+    navigate(`/survey-detail/${serviceId}`);
   };
   
   // Define animations
@@ -316,14 +316,14 @@ const EndingPage = () => {
                 className="text-center"
               >
                 <p className="text-sm text-gray-500 mb-4">
-                  Anda akan dialihkan ke halaman testimonial dalam beberapa saat...
+                  Klik tombol di bawah untuk melihat skor survei Anda
                 </p>
                 
                 <Link
-                  to="/testimonials"
+                  to={`/history/${serviceId}`}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 focus:outline-none"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" /> Lihat Testimonial
+                  <ArrowLeft className="w-4 h-4 mr-2" /> Lihat Skor Survei
                 </Link>
               </motion.div>
             </>

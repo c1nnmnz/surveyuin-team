@@ -158,7 +158,13 @@ const SurveyPage = () => {
   // Check if user is logged in and already completed this survey
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: `/survey/${serviceId}` } });
+      navigate('/login', { state: { from: `/survey/${serviceId}`, serviceId } });
+      return;
+    }
+    
+    // Skip the check if serviceId is invalid
+    if (!serviceId) {
+      console.warn('Cannot check survey completion: serviceId is undefined');
       return;
     }
     
@@ -181,9 +187,21 @@ const SurveyPage = () => {
   useEffect(() => {
     setLoading(true);
     try {
-      // Parse serviceId as a number if possible
-      const parsedServiceId = parseInt(serviceId, 10);
-      const service = getServiceById(isNaN(parsedServiceId) ? serviceId : parsedServiceId);
+      // Check if serviceId is valid
+      if (!serviceId) {
+        console.error('Invalid serviceId: serviceId is undefined or null');
+        setError('ID Layanan tidak valid');
+        setCurrentServiceData({
+          id: 'default',
+          name: 'Layanan Kampus',
+          description: 'Deskripsi layanan kampus',
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // Attempt to get the service
+      const service = getServiceById(serviceId);
       
       if (service) {
         setCurrentServiceData(service);
@@ -192,7 +210,7 @@ const SurveyPage = () => {
         // If service not found, use a fallback service
         console.warn(`Service with ID ${serviceId} not found, using fallback`);
         setCurrentServiceData({
-          id: serviceId,
+          id: serviceId || 'unknown',
           name: 'Layanan Kampus',
           description: 'Deskripsi layanan kampus',
         });
@@ -347,69 +365,57 @@ const SurveyPage = () => {
     // Hide the warning
     setShowDuplicateWarning(false);
   };
-  
-  // Inline Progress Indicator - always fixed at bottom-left
+
+  // Inline Progress Indicator - Sticky at the bottom-right of the viewport
   const renderProgressIndicator = () => {
     const completionPercentage = Math.round(progressPercentage);
     const isComplete = completionPercentage === 100;
     return (
-      <motion.div
-        className="fixed bottom-6 left-6 z-[9999]"
-        initial={{ opacity: 0, y: 20, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.9 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        style={{ transformOrigin: 'center', willChange: 'transform, opacity' }}
-      >
-        <motion.button
-          type="button"
-          role="button"
-          aria-label="Toggle question navigator"
-          className={`
-            flex items-center gap-2 rounded-full
-            border shadow-lg backdrop-blur-md
-            transform-gpu
-            ${isComplete
-              ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-emerald-400/20 py-2.5 px-4'
-              : 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-400/20 py-2.5 px-4'
-            }
-          `}
-          whileHover={{
-            scale: 1.03,
-            boxShadow: isComplete
-              ? '0 8px 20px rgba(16, 185, 129, 0.2)'
-              : '0 8px 20px rgba(59, 130, 246, 0.2)'
-          }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setShowQuestionNav(true)}
+      <div className="sticky bottom-8 right-8 z-[9999]">
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          style={{ transformOrigin: 'center', willChange: 'transform, opacity' }}
         >
-          {/* Left side: Count */}
-          <div className="flex items-center gap-1.5">
-            <div className="w-8 h-8 bg-white/20 flex items-center justify-center rounded-full">
-              {isComplete ? (
-                <CheckCircle className="h-5 w-5 text-white" />
-              ) : (
-                <span className="text-xs font-medium text-white">{answeredCount}</span>
-              )}
+          <motion.button
+            type="button"
+            role="button"
+            aria-label="Toggle question navigator"
+            className={`flex items-center gap-2 rounded-full border shadow-lg backdrop-blur-md transform-gpu ${isComplete ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-emerald-400/20 py-2.5 px-4' : 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-400/20 py-2.5 px-4'}`}
+            whileHover={{
+              scale: 1.03,
+              boxShadow: isComplete ? '0 8px 20px rgba(16, 185, 129, 0.2)' : '0 8px 20px rgba(59, 130, 246, 0.2)'
+            }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setShowQuestionNav(true)}
+          >
+            <div className="flex items-center gap-1.5">
+              <div className="w-8 h-8 bg-white/20 flex items-center justify-center rounded-full">
+                {isComplete ? (
+                  <CheckCircle className="h-5 w-5 text-white" />
+                ) : (
+                  <span className="text-xs font-medium text-white">{answeredCount}</span>
+                )}
+              </div>
+              {!isComplete && <span className="text-xs font-medium text-white/90">/{surveyQuestions.length}</span>}
             </div>
-            {!isComplete && <span className="text-xs font-medium text-white/90">/{surveyQuestions.length}</span>}
-          </div>
-          {/* Percentage */}
-          <span className="font-medium text-xs text-white">{completionPercentage}%</span>
-          {/* Progress bar + icon */}
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-12 rounded-full overflow-hidden bg-white/20">
-              <motion.div
-                initial={{ width: '0%' }}
-                animate={{ width: `${progressPercentage || 0}%` }}
-                className={`h-full rounded-full ${isComplete ? 'bg-green-300' : 'bg-white'}`}
-                transition={{ type: 'spring', stiffness: 150, damping: 15 }}
-              />
+            <span className="font-medium text-xs text-white">{completionPercentage}%</span>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-12 rounded-full overflow-hidden bg-white/20">
+                <motion.div
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${progressPercentage || 0}%` }}
+                  className={`h-full rounded-full ${isComplete ? 'bg-green-300' : 'bg-white'}`}
+                  transition={{ type: 'spring', stiffness: 150, damping: 15 }}
+                />
+              </div>
+              <ClipboardCheck className="h-4 w-4 text-white/90" />
             </div>
-            <ClipboardCheck className="h-4 w-4 text-white/90" />
-          </div>
-        </motion.button>
-      </motion.div>
+          </motion.button>
+        </motion.div>
+      </div>
     );
   };
   
@@ -515,7 +521,7 @@ const SurveyPage = () => {
         </form>
       </div>
       
-      {/* Inline Progress Indicator - fixed at bottom-left */}
+      {/* Inline Progress Indicator - Sticky at the bottom-right of the viewport */}
       {renderProgressIndicator()}
       
       {/* Question Navigator */}
@@ -533,4 +539,4 @@ const SurveyPage = () => {
   );
 };
 
-export default SurveyPage; 
+export default SurveyPage;

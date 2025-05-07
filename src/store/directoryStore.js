@@ -10,12 +10,26 @@ console.log('Service IDs:', serviceUnits.map(s => s.id).sort((a, b) => a - b).jo
 // Create the directory store
 export const useDirectoryStore = create(
   persist(
-    (set, get) => ({
+    (set, get) => {
+      // Add internal flag to track initialization
+      let isInitialized = false;
+      
+      return {
       // Store version to handle updates
       storeVersion: "1.0.1", // Update this when making significant changes
       
       // All service units
       services: serviceUnits,
+      
+      // Flag to track initialization state 
+      get isInitialized() {
+        return isInitialized;
+      },
+      
+      // Method to mark store as initialized
+      setInitialized: () => {
+        isInitialized = true;
+      },
       
       // Filter and search state
       searchQuery: '',
@@ -162,7 +176,28 @@ export const useDirectoryStore = create(
       
       // Get a service by ID
       getServiceById: (id) => {
-        return get().services.find(service => service.id === parseInt(id));
+        // If store is not initialized yet, return null without warnings
+        if (!isInitialized) {
+          return null;
+        }
+        
+        // Handle null or undefined id
+        if (id === null || id === undefined) {
+          console.warn('getServiceById called with null or undefined id');
+          return null;
+        }
+        
+        // Try to parse the ID as an integer
+        const parsedId = typeof id === 'string' ? parseInt(id, 10) : id;
+        
+        // Handle non-numeric IDs or NaN after parsing
+        if (isNaN(parsedId)) {
+          console.warn(`getServiceById called with non-numeric id: ${id}`);
+          return null;
+        }
+        
+        // Find the service with the matching ID
+        return get().services.find(service => service.id === parsedId);
       },
       
       // Check if a service is favorited
@@ -174,12 +209,29 @@ export const useDirectoryStore = create(
       isServiceCompleted: (serviceId) => {
         return get().completedSurveys.includes(serviceId);
       }
-    }),
+    };
+    },
     {
       name: 'directory-storage-v2', // Updated name to force a reset
-      onRehydrateStorage: () => {
+      onRehydrateStorage: (state) => {
         console.log('Directory store rehydrated with version:', serviceUnits.length, 'services');
+        
+        // Mark store as initialized after rehydration
+        return (rehydratedState) => {
+          if (rehydratedState) {
+            setTimeout(() => {
+              rehydratedState.setInitialized();
+            }, 100);
+          }
+        };
       }
     }
   )
 ); 
+
+// Export a function to initialize the store
+export function initializeDirectoryStore() {
+  const store = useDirectoryStore.getState();
+  store.setInitialized();
+  return store;
+} 

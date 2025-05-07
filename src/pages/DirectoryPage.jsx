@@ -298,6 +298,8 @@ const DirectoryPage = () => {
             <input
               ref={searchInputRef}
               type="text"
+              id="search-query"
+              name="search-query"
               placeholder="Cari layanan"
               className={`py-3 px-12 w-full rounded-full border-2 text-lg
                 ${isSearchFocused 
@@ -335,6 +337,8 @@ const DirectoryPage = () => {
               whileTap={{ scale: 0.99 }}
             >
               <select
+                id="faculty-filter"
+                name="faculty-filter"
                 className="appearance-none pl-4 pr-10 py-3.5 rounded-full border-2 border-secondary-200 
                   bg-white/90 backdrop-blur-sm shadow-md text-secondary-800 
                   focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-300/30
@@ -365,6 +369,8 @@ const DirectoryPage = () => {
               whileTap={{ scale: 0.99 }}
             >
               <select
+                id="category-filter"
+                name="category-filter"
                 className="appearance-none pl-4 pr-10 py-3.5 rounded-full border-2 border-secondary-200 
                   bg-white/90 backdrop-blur-sm shadow-md text-secondary-800 
                   focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-300/30
@@ -395,6 +401,8 @@ const DirectoryPage = () => {
               whileTap={{ scale: 0.99 }}
             >
               <select
+                id="sort-by"
+                name="sort-by"
                 className="appearance-none pl-4 pr-10 py-3.5 rounded-full border-2 border-secondary-200 
                   bg-white/90 backdrop-blur-sm shadow-md text-secondary-800 
                   focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-300/30
@@ -485,7 +493,10 @@ const DirectoryPage = () => {
                 }}
                 className="group rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-lg border-0"
               >
-                <Link to={`/service/${service.id}`} className="flex flex-col h-full">
+                <Link 
+                  to={`/service/${service.id}`}
+                  state={{ serviceId: service.id }}
+                  className="flex flex-col h-full">
                   {/* Color Banner with Service Icon */}
                   <div 
                     className="h-40 flex relative overflow-hidden"

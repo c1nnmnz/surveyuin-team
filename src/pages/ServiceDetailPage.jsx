@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
@@ -74,9 +74,24 @@ import LoadingEffect from '../components/ui/LoadingEffect';
 import Skeleton from '../components/ui/skeleton';
 import { TextSkeleton } from '../components/ui/skeleton';
 
+// Helper function to create consistent survey links
+const SurveyLink = ({ serviceId, isAuthenticated, children }) => {
+  return (
+    <Link
+      to={isAuthenticated ? `/survey/${serviceId}` : '/login'}
+      state={!isAuthenticated ? { from: `/survey/${serviceId}`, serviceId } : undefined}
+    >
+      {children}
+    </Link>
+  );
+};
+
 const ServiceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Use serviceId from URL params or from location state if available
+  const serviceId = id || location.state?.serviceId;
   const { getServiceById, isServiceFavorite, toggleFavorite, isServiceCompleted } = useDirectoryStore();
   const { isAuthenticated } = useUserStore();
   const [service, setService] = useState(null);
@@ -101,7 +116,7 @@ const ServiceDetailPage = () => {
   // Service data fetching
   useEffect(() => {
     setLoading(true);
-    const serviceData = getServiceById(id);
+    const serviceData = getServiceById(serviceId);
     
     // Simulate loading for better UX
     const timer = setTimeout(() => {
@@ -118,7 +133,7 @@ const ServiceDetailPage = () => {
       document.title = 'UIN Antasari';
       clearTimeout(timer);
     };
-  }, [id, getServiceById, navigate]);
+  }, [serviceId, getServiceById, navigate]);
   
   // Share function
   const handleShare = () => {
@@ -497,9 +512,7 @@ const ServiceDetailPage = () => {
                   
                   <div className="text-center mb-4">
                     {!isServiceCompleted(service.id) && (
-                      <Link
-                        to={isAuthenticated ? `/survey/${service.id}` : '/login'}
-                      >
+                      <SurveyLink serviceId={service.id} isAuthenticated={isAuthenticated}>
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
@@ -512,7 +525,7 @@ const ServiceDetailPage = () => {
                           <PenLine className="h-4 w-4 mr-2" />
                           Isi Survei
                         </motion.button>
-                      </Link>
+                      </SurveyLink>
                     )}
                   </div>
                   
@@ -763,23 +776,20 @@ const ServiceDetailPage = () => {
                   
                 <div className="text-center mb-6">
                     {!isServiceCompleted(service.id) && (
-                      <Link
-                        to={isAuthenticated ? `/survey/${service.id}` : '/login'}
-                        className="w-full block"
-                      >
-                      <motion.button
+                      <SurveyLink serviceId={service.id} isAuthenticated={isAuthenticated}>
+                        <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                        className="inline-flex items-center justify-center py-3.5 px-6 w-full rounded-full text-white text-base font-medium shadow-lg"
+                          className="inline-flex items-center justify-center py-3.5 px-6 w-full rounded-full text-white text-base font-medium shadow-lg"
                           style={{
-                          background: `linear-gradient(to right, ${gradient.accent}, ${gradient.text})`,
-                          boxShadow: `0 8px 20px -5px rgba(0, 0, 0, 0.2)`
+                            background: `linear-gradient(to right, ${gradient.accent}, ${gradient.text})`,
+                            boxShadow: `0 8px 20px -5px rgba(0, 0, 0, 0.2)`
                           }}
                         >
-                        <PenLine className="h-4 w-4 mr-2" />
-                        Isi Survei
-                      </motion.button>
-                      </Link>
+                          <PenLine className="h-4 w-4 mr-2" />
+                          Isi Survei
+                        </motion.button>
+                      </SurveyLink>
                     )}
                 </div>
                 
